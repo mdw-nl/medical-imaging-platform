@@ -1,0 +1,82 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "services/**"
+      - "pyproject.toml"
+      - "uv.lock"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      imaging-common: ${{ steps.filter.outputs.imaging-common }}
+      dicom-ingest: ${{ steps.filter.outputs.dicom-ingest }}
+      dvh-calculator: ${{ steps.filter.outputs.dvh-calculator }}
+      radiomics-calculator: ${{ steps.filter.outputs.radiomics-calculator }}
+      pacs-archiver: ${{ steps.filter.outputs.pacs-archiver }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            imaging-common:
+              - 'packages/imaging-common/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+            dicom-ingest:
+              - 'services/dicom-ingest/**'
+            dvh-calculator:
+              - 'services/dvh-calculator/**'
+            radiomics-calculator:
+              - 'services/radiomics-calculator/**'
+            pacs-archiver:
+              - 'services/pacs-archiver/**'
+
+  build:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - service: dicom-ingest
+            changed: ${{ needs.detect-changes.outputs.dicom-ingest }}
+          - service: dvh-calculator
+            changed: ${{ needs.detect-changes.outputs.dvh-calculator }}
+          - service: radiomics-calculator
+            changed: ${{ needs.detect-changes.outputs.radiomics-calculator }}
+          - service: pacs-archiver
+            changed: ${{ needs.detect-changes.outputs.pacs-archiver }}
+    steps:
+      - uses: actions/checkout@v4
+        if: matrix.changed == 'true' || needs.detect-changes.outputs.imaging-common == 'true'
+
+      - name: Log in to GHCR
+        if: matrix.changed == 'true' || needs.detect-changes.outputs.imaging-common == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: matrix.changed == 'true' || needs.detect-changes.outputs.imaging-common == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}

@@ -1,0 +1,7 @@
+variables:
+  PatientName: "SEDI_TEST001"
+  ProfileName: "TEST_PROFILE"
+  ProjectName: "TEST_PROJECT"
+  TrialName: "TEST_PROJECT"
+  SiteName: "MAASTRO"
+  SiteID: "1"

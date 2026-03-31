@@ -1,0 +1,130 @@
+[project]
+name = "imaging-workspace"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = ["packages/*", "services/*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+fix = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "ISC001",
+    "D203",
+    "D213",
+    "E501",
+    "TD002",
+    "TD003",
+    "TRY003",
+    "SIM102",
+    "SIM108",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D107",
+    "ANN",
+    "N",
+    "EM",
+    "FBT",
+    "PLR",
+    "C901",
+    "TRY002",
+    "DTZ",
+    "BLE001",
+    "TRY301",
+    "SLF001",
+    "S608",
+    "S105",
+    "S104",
+    "PLW0603",
+    "D205",
+    "D415",
+    "ARG001",
+    "ARG002",
+    "INP001",
+    "S113",
+    "PERF203",
+    "TRY300",
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "imaging_common",
+    "dicom_ingest",
+    "dvh_calculator",
+    "radiomics_calculator",
+    "pacs_archiver",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-type-checking]
+strict = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"services/radiomics-calculator/**" = [
+    "COM818", "TRY400", "TRY401",
+]
+"services/dvh-calculator/**" = [
+    "G004", "G003", "G201", "LOG015",
+    "TRY201", "TRY203", "TRY400", "TRY401",
+    "B904", "B905",
+    "TID252",
+    "PTH118", "PTH123", "PTH103", "PTH120", "PTH110", "PTH107", "PTH208",
+    "ERA001",
+    "PD011",
+    "PT009", "PT027",
+    "PERF401", "PERF102",
+    "S101", "S106", "S107", "S112",
+    "EXE001", "FIX002", "TD004",
+    "RUF012", "RUF059",
+    "SIM103", "SIM118",
+    "RET503", "RET504",
+    "PLW1641", "PLW2901",
+    "B007", "E712", "F841",
+    "D200", "COM818", "ARG004",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ty.environment]
+python-version = "3.12"
+
+[tool.ty.rules]
+unused-ignore-comment = "warn"
+invalid-return-type = "warn"
+invalid-argument-type = "warn"
+division-by-zero = "error"
+redundant-cast = "warn"
+invalid-method-override = "warn"
+not-subscriptable = "warn"
+call-non-callable = "warn"
+unknown-argument = "warn"
+unresolved-attribute = "warn"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.8",
+]

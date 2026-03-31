@@ -1,0 +1,23 @@
+postgres:
+  host: "host.docker.internal"
+  port: "5432"
+  username: "postgres"
+  password: "postgres"
+  db: "postgres"
+
+GraphDB:
+    host: "host.docker.internal"
+    port: "7200"
+    repo: "protrait"
+
+API:
+    host: "host.docker.internal"
+    port: "8666"
+
+dvh-calculations:
+  -
+    P-LUNG:
+      roi: "LUNG_L + LUNG_R"
+  -
+    MeanDoseIpsiLateralParotidGland:
+      roi: "PAROTID_IPSI"

@@ -1,0 +1,31 @@
+[project]
+name = "dvh-calculator"
+version = "0.1.0"
+description = "Dose-Volume Histogram calculator for radiotherapy planning"
+requires-python = ">=3.12"
+dependencies = [
+    "imaging-common",
+    "pynetdicom",
+    "psycopg2-binary",
+    "pydicom==2.4.4",
+    "pyyaml",
+    "croniter",
+    "pandas",
+    "rdflib",
+    "rt-utils",
+    "dicompyler-core",
+    "requests",
+    "uvicorn",
+    "fastapi",
+    "xmltodict",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dvh_calculator"]
+
+[tool.uv.sources]
+imaging-common = { workspace = true }

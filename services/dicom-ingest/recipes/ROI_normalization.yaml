@@ -1,0 +1,55 @@
+LUNG_R:
+  - '^lung[\s_-]*r$'
+  - '^lung[\s_-]*right$'
+  - '^lungr$'
+
+LUNG_L:
+  - '^lung[\s_-]*l$'
+  - '^lung[\s_-]*left$'
+  - '^lungl$'
+
+GTV_1:
+  - '^gtv[\s_-]*1$'
+  - '^gtvp[\s_-]*1$'
+
+SPINAL_CANAL_P:
+  - '^spinal[\s_-]*canal(_p)?$'
+
+PAROTID_IPSI:
+  - '^parotid[\s_-]*ipsilateral$'
+
+PAROTID_CONTRA:
+  - '^parotid[\s_-]*contralateral$'
+
+SUBMANDIBULAR_L:
+  - '^submandibular[\s_-]*l$'
+
+SUBMANDIBULAR_R:
+  - '^submandibular[\s_-]*r$'
+
+PTV_P:
+  - '^ptv[\s_-]*p$'
+
+VESSELS_P:
+  - '^vessels[\s_-]*p$'
+
+ORAL_CAVITY_EXT:
+  - '^oral[\s_-]*cavity[\s_-]*ext$'
+
+PCM_SUP:
+  - '^pcm[\s_-]*sup$'
+
+PCM_MED:
+  - '^pcm[\s_-]*med$'
+
+PCM_INF:
+  - '^pcm[\s_-]*inf$'
+
+ESOPHAGUS:
+  - '^esophagus$'
+
+HEART:
+  - '^heart$'
+
+TUMOR:
+  - '^tumou?r$'

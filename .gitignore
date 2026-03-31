@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# uv
+.venv/
+
+# IDE
+.idea/
+.vscode/

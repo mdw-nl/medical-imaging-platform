@@ -1,0 +1,20 @@
+[project]
+name = "pacs-archiver"
+version = "0.1.0"
+description = "Archives anonymized DICOM data to PACS/XNAT via C-STORE"
+requires-python = ">=3.12"
+dependencies = [
+    "imaging-common",
+    "pynetdicom",
+    "pydicom<3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pacs_archiver"]
+
+[tool.uv.sources]
+imaging-common = { workspace = true }
