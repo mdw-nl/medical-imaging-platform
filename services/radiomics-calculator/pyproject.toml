@@ -8,9 +8,9 @@ dependencies = [
     "numpy",
     "pyyaml",
     "croniter",
-    "psycopg2-binary",
+    "psycopg2-binary>=2.9.6",
     "requests",
-    "pydicom",
+    "pydicom<3",
 ]
 
 [project.optional-dependencies]

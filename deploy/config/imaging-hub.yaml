@@ -1,0 +1,21 @@
+postgres:
+  host: "postgres"
+  port: "5432"
+  username: "postgres"
+  db: "testdb"
+
+scp:
+  ae_titles:
+    - "ALPHA"
+    - "BETA"
+    - "GAMMA"
+
+anonymization:
+  patient_name: "TEST_PATIENT"
+  profile_name: "TEST_PROFILE"
+  project_name: "TEST_PROJECT"
+  trial_name: "TEST_PROJECT"
+  site_name: "TEST_SITE"
+  site_id: "1"
+  uid_secret: "change-me-before-production"
+  uid_prefix: "99999."

@@ -1,10 +1,18 @@
+"""Container for a matched set of RT DICOM files (plan, struct, dose, CT)."""
+
 import logging
-import os
+from pathlib import Path
 
 from dicompylercore.dicomparser import DicomParser
 
+logger = logging.getLogger(__name__)
+
 
 class DicomBundle:
+    """Group of related RT DICOM files for a single patient and plan."""
+
+    __hash__ = None
+
     def __init__(self, patient_id, rt_plan: str, rt_struct: str, rt_dose: list, rt_ct: str, read=True):
         self.patient_id = patient_id
         self.rt_plan_path = rt_plan
@@ -16,35 +24,35 @@ class DicomBundle:
                 self.rt_struct: DicomParser = DicomParser(rt_struct)
                 self.rt_dose: list = [DicomParser(rt) for rt in rt_dose]
                 self.rt_dose_path: list = rt_dose
-            except Exception as e:
-                logging.exception(f"Error reading DICOM files: {e}")
-                raise e
-        logging.info(f"Ct path is {self.rt_ct_path}")
+            except Exception:
+                logger.exception("Error reading DICOM files")
+                raise
+        logger.info("Ct path is %s", self.rt_ct_path)
 
     def __eq__(self, other):
+        """Compare bundles by plan, CT, and struct paths."""
         if not isinstance(other, DicomBundle):
             return False
-        if (
+        return (
             self.rt_plan_path == other.rt_plan_path
             and self.rt_ct_path == other.rt_ct_path
             and self.rt_struct_path == other.rt_struct_path
-        ):
-            return True
-        return False
+        )
 
-    # function to delete all the elemnt using the path of each element
     def rm_data_patient(self):
+        """Delete all DICOM files associated with this bundle from disk."""
         try:
-            logging.info(f"Removing data for patient {self.patient_id}")
-            os.remove(self.rt_plan_path)
-            logging.info(f"Removing rt plan  {self.rt_plan_path}")
-            os.remove(self.rt_struct_path)
-            logging.info(f"Removing data rt struct {self.rt_struct_path}")
+            logger.info("Removing data for patient %s", self.patient_id)
+            Path(self.rt_plan_path).unlink()
+            logger.info("Removing rt plan  %s", self.rt_plan_path)
+            Path(self.rt_struct_path).unlink()
+            logger.info("Removing data rt struct %s", self.rt_struct_path)
             for rt in self.rt_dose_path:
-                logging.info(f"Removing data rt dose {self.rt_dose_path}")
-                os.remove(rt)
+                logger.info("Removing data rt dose %s", rt)
+                Path(rt).unlink()
             if self.rt_plan_path is not None and self.rt_ct_path is not None:
-                for f in os.listdir(self.rt_ct_path):
-                    os.remove(os.path.join(self.rt_ct_path, f))
-        except Exception as e:
-            logging.warning(f"Error deleting files: {e}")
+                ct_dir = Path(self.rt_ct_path)
+                for f in ct_dir.iterdir():
+                    f.unlink()
+        except Exception:
+            logger.exception("Error deleting files")

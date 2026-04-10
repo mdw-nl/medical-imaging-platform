@@ -1,3 +1,5 @@
+"""Global constants, SQL queries, and environment-driven settings."""
+
 import os
 
 NUMBER_ATTEMPTS = 5

@@ -12,4 +12,7 @@ RUN uv sync --frozen --package pacs-archiver --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
+
 CMD ["python", "-m", "pacs_archiver"]

@@ -1,0 +1,255 @@
+# Organs at risk (OARs)
+
+BODY:
+  - '^body$'
+  - '^external$'
+  - '^outer[\s_-]*contour$'
+
+BRACHIAL_PLEXUS:
+  - '^brachial[\s_-]*plexus$'
+
+BRACHIAL_PLEXUS_L:
+  - '^brachial[\s_-]*plexus[\s_-]*l(eft)?$'
+
+BRACHIAL_PLEXUS_R:
+  - '^brachial[\s_-]*plexus[\s_-]*r(ight)?$'
+
+BRAIN:
+  - '^brain$'
+  - '^cerebrum$'
+
+BRAINSTEM:
+  - '^brain[\s_-]*stem$'
+  - '^brainstem$'
+
+BRAINSTEM_PRV:
+  - '^brain[\s_-]*stem[\s_-]*0*3$'
+  - '^brainstem[\s_-]*prv$'
+  - '^brain[\s_-]*stem[\s_-]*prv$'
+
+CHIASM:
+  - '^chiasm$'
+  - '^optic[\s_-]*chiasm$'
+
+COCHLEA_L:
+  - '^cochlea[\s_-]*l(eft)?$'
+
+COCHLEA_R:
+  - '^cochlea[\s_-]*r(ight)?$'
+
+ESOPHAGUS:
+  - '^esophagus$'
+  - '^oesophagus$'
+
+EYES:
+  - '^eyes$'
+
+HEART:
+  - '^heart$'
+
+LACRIMAL_GLANDS:
+  - '^lacrimal[\s_-]*glands?$'
+
+LARYNX:
+  - '^larynx$'
+
+LENS_L:
+  - '^lens[\s_-]*l(eft)?$'
+
+LENS_R:
+  - '^lens[\s_-]*r(ight)?$'
+
+LIPS:
+  - '^lips?$'
+
+LUNG_L:
+  - '^lung[\s_-]*l(eft)?$'
+  - '^lungl$'
+
+LUNG_R:
+  - '^lung[\s_-]*r(ight)?$'
+  - '^lungr$'
+
+LUNGS:
+  - '^lungs$'
+
+MANDIBLE:
+  - '^mandible$'
+
+MEDIASTINUM:
+  - '^mediastinum$'
+  - '^mediast[\s_-]*envelop(e)?$'
+
+OPTIC_NERVE_L:
+  - '^optic[\s_-]*nerve[\s_-]*l(eft)?$'
+
+OPTIC_NERVE_R:
+  - '^optic[\s_-]*nerve[\s_-]*r(ight)?$'
+
+ORAL_CAVITY:
+  - '^oral[\s_-]*cavity$'
+  - '^oralcavity$'
+
+ORAL_CAVITY_EXT:
+  - '^oral[\s_-]*cavity[\s_-]*ext$'
+
+PAROTID_CONTRA:
+  - '^parotid[\s_-]*contralateral$'
+
+PAROTID_IPSI:
+  - '^parotid[\s_-]*ipsilateral$'
+
+PAROTIDS:
+  - '^parotids?$'
+  - '^parotid[\s_-]*glands?$'
+
+PCM_INF:
+  - '^pcm[\s_-]*inf$'
+
+PCM_MED:
+  - '^pcm[\s_-]*med$'
+
+PCM_SUP:
+  - '^pcm[\s_-]*sup$'
+
+PHARYNX_CONSTRICTOR:
+  - '^pharynx[\s_-]*const(rictor)?s?$'
+
+PITUITARY:
+  - '^pituitary$'
+
+POSTERIOR_NECK:
+  - '^posterior[\s_-]*neck$'
+
+SHOULDERS:
+  - '^shoulders?$'
+
+SPINAL_CANAL_P:
+  - '^spinal[\s_-]*canal(_p)?$'
+
+SPINAL_CORD:
+  - '^spinal[\s_-]*cord$'
+  - '^spinalcord$'
+
+SPINAL_CORD_PRV:
+  - '^spinal[\s_-]*cord[\s_-]*0*5$'
+  - '^spinal[\s_-]*cord[\s_-]*prv$'
+  - '^spinalcord[\s_-]*prv$'
+
+SUBMANDIBULAR:
+  - '^submandibular$'
+  - '^submandibular[\s_-]*glands?$'
+
+SUBMANDIBULAR_L:
+  - '^submandibular[\s_-]*l(eft)?$'
+
+SUBMANDIBULAR_R:
+  - '^submandibular[\s_-]*r(ight)?$'
+
+THYROID:
+  - '^thyroid$'
+
+TRACHEA:
+  - '^trachea$'
+
+TUMOR:
+  - '^tumou?r$'
+
+# Target volumes
+
+CTV_1:
+  - '^ctv[\s_-]*1$'
+
+CTV_2:
+  - '^ctv[\s_-]*2$'
+
+GTV_1:
+  - '^gtv[\s_-]*1$'
+  - '^gtvp[\s_-]*1$'
+  - '^gtv[\s_-]*P$'
+
+GTV_2:
+  - '^gtv[\s_-]*2$'
+
+PTV_1:
+  - '^ptv[\s_-]*1$'
+
+PTV_2:
+  - '^ptv[\s_-]*2$'
+
+PTV_70:
+  - '^ptv[\s_-]*70$'
+
+PTV_HIGH:
+  - '^ptv[\s_-]*high([\s_-]*opt)?$'
+
+PTV_LOW:
+  - '^ptv[\s_-]*low([\s_-]*opt)?$'
+
+PTV_MID:
+  - '^ptv[\s_-]*mid([\s_-]*opt)?$'
+
+PTV_P:
+  - '^ptv[\s_-]*p$'
+
+PTV_TOTAL:
+  - '^ptv[\s_-]*total$'
+
+VESSELS_P:
+  - '^vessels[\s_-]*p$'
+
+# Planning and optimization structures
+
+COUCH_INTERIOR:
+  - '^couch[\s_-]*interior$'
+
+COUCH_SURFACE:
+  - '^couch[\s_-]*surface$'
+
+LARYNX_MINUS_PTV:
+  - '^larynx[\s_-]*ptv$'
+
+MANDIBLE_MINUS_PTV:
+  - '^mandible[\s_-]*ptv$'
+
+ORAL_CAVITY_MINUS_PTV:
+  - '^o(ral)?[\s_-]*cavity[\s_-]*ptv$'
+
+PAROTID_CON_MINUS_PTV:
+  - '^parotid[\s_-]*con(tra)?[\s_-]*ptv$'
+
+PAROTID_IPS_MINUS_PTV:
+  - '^parotid[\s_-]*ips(i)?[\s_-]*ptv$'
+
+PAROTIDS_MINUS_PTV:
+  - '^parotids?[\s_-]*ptv$'
+
+PHARYNX_CONST_MINUS_PTV:
+  - '^phar(ynx)?[\s_-]*const(rictor)?[\s_-]*ptv$'
+
+PTV_LOW_MINUS_MID:
+  - '^ptv[\s_-]*low[\s_-]*ptv[\s_-]*mid$'
+
+PTV_MID_MINUS_HIGH:
+  - '^ptv[\s_-]*mid[\s_-]*ptv[\s_-]*high$'
+
+RING_PTV_HIGH:
+  - '^ring[\s_-]*ptv[\s_-]*high$'
+
+RING_PTV_LOW:
+  - '^ring[\s_-]*ptv[\s_-]*low$'
+
+RING_PTV_MID:
+  - '^ring[\s_-]*ptv[\s_-]*mid$'
+
+SUBMAND_L_MINUS_PTV:
+  - '^submand(ibular)?[\s_-]*l[\s_-]*ptv$'
+
+SUBMAND_MINUS_PTV:
+  - '^submand(ibular)?[\s_-]*ptv$'
+
+SUBMAND_R_MINUS_PTV:
+  - '^submand(ibular)?[\s_-]*r[\s_-]*ptv$'
+
+THYROID_MINUS_PTV:
+  - '^thyroid[\s_-]*ptv$'

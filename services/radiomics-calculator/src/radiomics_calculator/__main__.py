@@ -1,8 +1,10 @@
+"""Radiomics calculator service that polls imaging-hub for NIfTI packages and computes PyRadiomics features."""
+
 import logging
 import os
 from pathlib import Path
 
-from imaging_common import APIPoller, PostgresInterface, XNATUploader, load_yaml_config
+from imaging_common import APIPoller, PostgresInterface, XNATUploader
 from radiomics_calculator.radiomics_calculator import RadiomicsCalculator
 from radiomics_calculator.radiomics_results_postgress import send_postgress, setup_radiomics_db
 
@@ -15,32 +17,19 @@ SEND_XNAT = os.getenv("SEND_XNAT", "false").strip().lower() in ("1", "true", "ye
 SEND_POSTGRES = os.getenv("SEND_POSTGRES", "true").strip().lower() in ("1", "true", "yes")
 
 
-def connect_db():
-    config_path = Path(os.getenv("CONFIG_PATH", str(Path(__file__).parents[2] / "config" / "config.yaml")))
-    config = load_yaml_config(config_path)
-    config_dict_db = config["postgres"]
-    host, port, user, pwd, db_name = (
-        config_dict_db["host"],
-        config_dict_db["port"],
-        config_dict_db["username"],
-        config_dict_db["password"],
-        config_dict_db["db"],
-    )
-    db = PostgresInterface(host=host, database=db_name, user=user, password=pwd, port=port)
-    db.connect()
-    logger.info("Connected to the database")
-    return db
-
-
 class RadiomicsPipeline:
+    """Orchestrate feature extraction, database storage, and optional XNAT upload."""
+
     def __init__(self):
-        self.db = connect_db()
+        config_path = Path(os.getenv("CONFIG_PATH", str(Path(__file__).parents[2] / "config" / "config.yaml")))
+        self.db = PostgresInterface.connect_from_yaml(config_path)
         self.calculator = RadiomicsCalculator()
         self.xnat_sender = XNATUploader() if SEND_XNAT else None
         postgres_db = setup_radiomics_db()
         postgres_db.run(self.db)
 
     def process_message(self, package: dict):
+        """Extract radiomics features for all ROI masks in *package* and store the results."""
         rtstruct_sop_uid = package["rtstruct_sop_uid"]
         logger.info("Received NIfTI package for RTSTRUCT %s", rtstruct_sop_uid)
 

@@ -1,16 +1,20 @@
+"""DVH calculation engine using dicompyler-core."""
+
 import logging
-import traceback
 from uuid import uuid4
 
 import numpy as np
 from dicompylercore import dicomparser, dvh, dvhcalc
 
-from .dicom_bundle import DicomBundle
+from dvh_calculator.DVH.dicom_bundle import DicomBundle
+
+logger = logging.getLogger(__name__)
 
 
 def prepare_output(dvh_points, structure, calc_dvh, dict_value):
+    """Build a JSON-LD DVH result dictionary for a single structure."""
     id_data = "http://data.local/ldcm-rt/" + str(uuid4())
-    structOut = {
+    return {
         "@id": id_data,
         "structureName": structure["name"],
         "min": {"@id": f"{id_data}/min", "unit": "Gray", "value": calc_dvh.min},
@@ -28,82 +32,62 @@ def prepare_output(dvh_points, structure, calc_dvh, dict_value):
         "dvh_curve": {"@id": f"{id_data}/dvh_curve", "dvh_points": dvh_points},
     }
 
-    return structOut
 
-
-class DVH_calculation:
-    """Starting point for the dvh calculation.
-    Base on the arguments that you provide you will query the data from a ttl file or from Graph service.
-    Tested only on GraphDB
-    """
+class DVHCalculation:
+    """Starting point for the DVH calculation."""
 
     def process_dvh_result(self, calculation_r, index, structures):
+        """Extract dose-volume points and summary statistics from a DVH result."""
         dvh_d = calculation_r.bincenters.tolist()
         dvh_v = calculation_r.counts.tolist()
-        dvh_points = []
+        dvh_points = [{"d_point": dvh_d[i], "v_point": dvh_v[i]} for i in range(len(dvh_d))]
         dict_values = {}
 
-        for i in range(len(dvh_d)):
-            dvh_points.append({"d_point": dvh_d[i], "v_point": dvh_v[i]})
         for v in [0, 5, 10, 15, 20, 30, 35]:
             key = f"V{v}value"
             try:
                 dict_values[key] = float(getattr(calculation_r, f"V{v}").value)
-            except (AttributeError, ValueError, TypeError) as e:
-                logging.warning(f"Value not available for {key}, setting to None.")
-                logging.exception(e)
+            except (AttributeError, ValueError, TypeError):
+                logger.warning("Value not available for %s, setting to None.", key)
                 dict_values[key] = None
 
         structOut = prepare_output(dvh_points, structures[index], calculation_r, dict_values)
-        n_s = structOut["structureName"]
-        logging.info(f"Structure: {n_s}")
+        logger.info("Structure: %s", structOut["structureName"])
         return structOut
 
     def calculate_dvh_all(self, dicom_bundle: DicomBundle, structures, str_name=None):
+        """Calculate DVH for all structures in the bundle, optionally filtered by name."""
         output = []
-        # TODO add function to select which structures use for the dvh calculation
-        # ls = []
         if len(structures) > 0:
             for index in structures:
-                logging.warning("Calculating structures " + str(structures[index]))
+                logger.warning("Calculating structures %s", structures[index])
                 if (str_name and structures[index]["name"] == str_name) or not str_name:
                     try:
                         calc_dvh = self.calculate_dvh(index, dicom_bundle)
-                    except Exception as except_t:
-                        logging.warning(except_t)
-                        logging.warning("Error something wrong")
-                        logging.warning(traceback.format_exc())
-                        logging.warning("Skipping...")
+                    except Exception:
+                        logger.exception("Error calculating DVH for structure %s, skipping", structures[index])
                         continue
                     try:
-                        logging.info("DVh calculation complete. Processing output...")
+                        logger.info("DVH calculation complete. Processing output...")
                         result = self.process_dvh_result(calc_dvh, index, structures)
                         output.append(result)
-                    except Exception as e:
-                        logging.info("error")
-                        logging.warning(e)
-                        logging.warning(traceback.format_exc())
+                    except Exception:
+                        logger.exception("Error processing DVH result for structure %s, skipping", structures[index])
                         continue
                 else:
-                    logging.info(f"Skipping structure {structures[index]['name']} as it is not in the list.")
+                    logger.info("Skipping structure %s as it is not in the list.", structures[index]["name"])
         else:
-            logging.info("NO structures")
+            logger.info("NO structures")
         return output
 
     def calculate_dvh(self, index, dicom_bundle: DicomBundle):
-        """:param dicom_bundle:
-        :param index:
-        :return:
-        """
-        # TODO check if multiple rt dose are in the dicom bundle. Also we need to add dose summation
-        calc_dvh = self.get_dvh_v(
+        """Calculate DVH for a single structure index."""
+        return self.get_dvh_v(
             structure=dicom_bundle.rt_struct,
             dose_data=dicom_bundle.rt_dose[0],
             roi=index,
             rt_plan_p=dicom_bundle.rt_plan,
         )
-
-        return calc_dvh
 
     def get_dvh_v(
         self,
@@ -120,55 +104,15 @@ class DVH_calculation:
         memmap_rtdose=False,
         callback=None,
     ):
-        """Calculate a cumulative DVH in Gy from a DICOM RT Structure Set & Dose.
-            Take as input the RTplan to calculate the Vx (v10,20 etc..)
-
-        Parameters
-        ----------
-        structure : pydicom Dataset or filename
-            DICOM RT Structure Set used to determine the structure data.
-        dose_data : pydicom Dataset or filename
-            DICOM RT Dose used to determine the dose grid.
-        roi : int
-            The ROI number used to uniquely identify the structure in the structure
-            set.
-        rt_plan_p : pydicom Dataset or filename
-            DICOM RT plan path
-
-        limit : int, optional
-            Dose limit in cGy as a maximum bin for the histogram.
-        calculate_full_volume : bool, optional
-            Calculate the full structure volume including contours outside the
-            dose grid.
-        use_structure_extents : bool, optional
-            Limit the DVH calculation to the in-plane structure boundaries.
-        interpolation_resolution : tuple or float, optional
-            Resolution in mm (row, col) to interpolate structure and dose data to.
-            If float is provided, original dose grid pixel spacing must be square.
-        interpolation_segments_between_planes : integer, optional
-            Number of segments to interpolate between structure slices.
-        thickness : float, optional
-            Structure thickness used to calculate volume of a voxel.
-        memmap_rtdose : bool, optional
-            Use memory mapping to access the pixel array of the DICOM RT Dose.
-            This reduces memory usage at the expense of increased calculation time.
-        callback : function, optional
-            A function that will be called at every iteration of the calculation.
-
-        Returns:
-        -------
-        dvh.DVH
-            An instance of dvh.DVH in cumulative dose. This can be converted to
-            different formats using the attributes and properties of the DVH class.
-        """
+        """Calculate a cumulative DVH in Gy from a DICOM RT Structure Set & Dose."""
         rt_str = structure
-        if type(dose_data) is str:
+        if isinstance(dose_data, str):
             rt_dose = dicomparser.DicomParser(dose_data, memmap_pixel_array=memmap_rtdose)
         else:
             rt_dose = dose_data
         structures = rt_str.GetStructures()
         s = structures[roi]
-        logging.debug(f"Structure selected {s}")
+        logger.debug("Structure selected %s", s)
         s["planes"] = rt_str.GetStructureCoordinates(roi)
         s["thickness"] = thickness or rt_str.CalculatePlaneThickness(s["planes"])
 
@@ -182,46 +126,22 @@ class DVH_calculation:
             interpolation_segments_between_planes,
             callback,
         )
+
+        bins = np.arange(0, 2) if calc_dvh.histogram.size == 1 else np.arange(0, calc_dvh.histogram.size + 1) / 100
+
+        dvh_kwargs = {
+            "counts": calc_dvh.histogram,
+            "bins": bins,
+            "dvh_type": "differential",
+            "dose_units": "Gy",
+            "notes": calc_dvh.notes,
+            "name": s["name"],
+        }
+
         if rt_plan_p is not None:
-            rt_plan = rt_plan_p
-
-            plan = rt_plan.GetPlan()
+            plan = rt_plan_p.GetPlan()
             if plan["rxdose"] is not None:
-                logging.debug("rx dose does exist in the rt plan")
+                logger.debug("rx dose does exist in the rt plan")
+                dvh_kwargs["rx_dose"] = plan["rxdose"] / 100
 
-                return dvh.DVH(
-                    counts=calc_dvh.histogram,
-                    bins=(
-                        np.arange(0, 2)
-                        if (calc_dvh.histogram.size == 1)
-                        else np.arange(0, calc_dvh.histogram.size + 1) / 100
-                    ),
-                    dvh_type="differential",
-                    dose_units="Gy",
-                    notes=calc_dvh.notes,
-                    name=s["name"],
-                    rx_dose=plan["rxdose"] / 100,
-                ).cumulative
-            logging.debug("rx dose does not exist in the rt plan")
-            return dvh.DVH(
-                counts=calc_dvh.histogram,
-                bins=(
-                    np.arange(0, 2)
-                    if (calc_dvh.histogram.size == 1)
-                    else np.arange(0, calc_dvh.histogram.size + 1) / 100
-                ),
-                dvh_type="differential",
-                dose_units="Gy",
-                notes=calc_dvh.notes,
-                name=s["name"],
-            ).cumulative
-        return dvh.DVH(
-            counts=calc_dvh.histogram,
-            bins=(
-                np.arange(0, 2) if (calc_dvh.histogram.size == 1) else np.arange(0, calc_dvh.histogram.size + 1) / 100
-            ),
-            dvh_type="differential",
-            dose_units="Gy",
-            notes=calc_dvh.notes,
-            name=s["name"],
-        ).cumulative
+        return dvh.DVH(**dvh_kwargs).cumulative

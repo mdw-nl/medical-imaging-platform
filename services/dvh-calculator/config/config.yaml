@@ -1,17 +1,17 @@
 postgres:
-  host: "host.docker.internal"
+  host: "postgres"
   port: "5432"
   username: "postgres"
-  password: "postgres"
-  db: "postgres"
+
+  db: "testdb"
 
 GraphDB:
-    host: "host.docker.internal"
+    host: "postgres"
     port: "7200"
     repo: "protrait"
 
 API:
-    host: "host.docker.internal"
+    host: "postgres"
     port: "8666"
 
 dvh-calculations:

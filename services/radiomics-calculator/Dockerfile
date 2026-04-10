@@ -16,4 +16,7 @@ RUN uv sync --frozen --package radiomics-calculator --no-dev --extra runtime
 
 ENV PATH="/app/.venv/bin:$PATH"
 
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
+
 CMD ["python", "-m", "radiomics_calculator"]

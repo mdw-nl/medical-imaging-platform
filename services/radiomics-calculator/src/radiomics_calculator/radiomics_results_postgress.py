@@ -1,19 +1,22 @@
+"""Postgres schema setup and result persistence for radiomics feature data."""
+
 import csv
 import io
 import logging
 import uuid
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", handlers=[logging.StreamHandler()]
-)
 logger = logging.getLogger(__name__)
 
 
 class setup_radiomics_db:
+    """Create the radiomics_manager and radiomics_results tables if they do not exist."""
+
     def create_radiomics_manager(self, db):
+        """Create the radiomics_manager table that links extraction runs to SOP UIDs."""
         columns = {
             "radiomics_id": "UUID PRIMARY KEY",
             "sop_instance_uid": "TEXT NOT NULL",
+            "created_at": "TIMESTAMPTZ NOT NULL DEFAULT NOW()",
         }
         db.create_table("radiomics_manager", columns)
 
@@ -196,8 +199,28 @@ class setup_radiomics_db:
         logger.info("radiomics_results table created with %d columns", len(columns))
 
     def run(self, db):
+        """Run all table-creation steps."""
         self.create_radiomics_manager(db)
         self.create_results_table(db)
+
+
+_DIAG_CSV_TO_DB = {
+    "diagnostics_Versions_PyRadiomics": "diag_pyradiomics_version",
+    "diagnostics_Image-original_Hash": "diag_image_hash",
+    "diagnostics_Image-original_Dimensionality": "diag_image_dimensionality",
+    "diagnostics_Image-original_Spacing": "diag_image_spacing",
+    "diagnostics_Image-original_Size": "diag_image_size",
+    "diagnostics_Image-original_Mean": "diag_image_mean",
+    "diagnostics_Image-original_Minimum": "diag_image_minimum",
+    "diagnostics_Image-original_Maximum": "diag_image_maximum",
+    "diagnostics_Mask-original_Hash": "diag_mask_hash",
+    "diagnostics_Mask-original_Spacing": "diag_mask_spacing",
+    "diagnostics_Mask-original_Size": "diag_mask_size",
+    "diagnostics_Mask-original_BoundingBox": "diag_mask_bounding_box",
+    "diagnostics_Mask-original_VoxelNum": "diag_mask_voxel_num",
+    "diagnostics_Mask-original_VolumeNum": "diag_mask_volume_num",
+    "diagnostics_Mask-original_CenterOfMass": "diag_mask_center_of_mass",
+}
 
 
 def send_postgress(db, csv_content, metadata):
@@ -244,22 +267,8 @@ def send_postgress(db, csv_content, metadata):
         results_data["roi_name"] = clean(row.pop("id", "unknown_roi"))
 
         # diagnostics
-        results_data["diag_pyradiomics_version"] = clean(row.get("diagnostics_Versions_PyRadiomics"))
-        results_data["diag_image_hash"] = clean(row.get("diagnostics_Image-original_Hash"))
-        results_data["diag_image_dimensionality"] = clean(row.get("diagnostics_Image-original_Dimensionality"))
-        results_data["diag_image_spacing"] = clean(row.get("diagnostics_Image-original_Spacing"))
-        results_data["diag_image_size"] = clean(row.get("diagnostics_Image-original_Size"))
-        results_data["diag_image_mean"] = clean(row.get("diagnostics_Image-original_Mean"))
-        results_data["diag_image_minimum"] = clean(row.get("diagnostics_Image-original_Minimum"))
-        results_data["diag_image_maximum"] = clean(row.get("diagnostics_Image-original_Maximum"))
-
-        results_data["diag_mask_hash"] = clean(row.get("diagnostics_Mask-original_Hash"))
-        results_data["diag_mask_spacing"] = clean(row.get("diagnostics_Mask-original_Spacing"))
-        results_data["diag_mask_size"] = clean(row.get("diagnostics_Mask-original_Size"))
-        results_data["diag_mask_bounding_box"] = clean(row.get("diagnostics_Mask-original_BoundingBox"))
-        results_data["diag_mask_voxel_num"] = clean(row.get("diagnostics_Mask-original_VoxelNum"))
-        results_data["diag_mask_volume_num"] = clean(row.get("diagnostics_Mask-original_VolumeNum"))
-        results_data["diag_mask_center_of_mass"] = clean(row.get("diagnostics_Mask-original_CenterOfMass"))
+        for csv_key, db_col in _DIAG_CSV_TO_DB.items():
+            results_data[db_col] = clean(row.get(csv_key))
 
         # radiomics features
         for key, value in row.items():

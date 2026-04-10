@@ -6,17 +6,16 @@ requires-python = ">=3.12"
 dependencies = [
     "imaging-common",
     "pynetdicom",
-    "psycopg2-binary",
-    "pydicom==2.4.4",
-    "pyyaml",
+    "psycopg2-binary>=2.9.6",
+    "pydicom<3",
+    "pyyaml>=6.0.1",
     "croniter",
     "pandas",
-    "rdflib",
     "rt-utils",
     "dicompyler-core",
-    "requests",
+    "requests>=2.32.0",
     "uvicorn",
-    "fastapi",
+    "fastapi>=0.115.0",
     "xmltodict",
 ]
 

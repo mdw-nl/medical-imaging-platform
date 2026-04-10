@@ -1,0 +1,20 @@
+<xnat:projects xmlns:xnat="http://nrg.wustl.edu/xnat">
+    <xnat:projectData>
+        <xnat:ID>ALPHA</xnat:ID>
+        <xnat:secondary_ID>ALPHAID</xnat:secondary_ID>
+        <xnat:name>ALPHA_project</xnat:name>
+        <xnat:description>ALPHA project</xnat:description>
+    </xnat:projectData>
+    <xnat:projectData>
+        <xnat:ID>BETA</xnat:ID>
+        <xnat:secondary_ID>BETAID</xnat:secondary_ID>
+        <xnat:name>BETA_project</xnat:name>
+        <xnat:description>BETA project</xnat:description>
+    </xnat:projectData>
+    <xnat:projectData>
+        <xnat:ID>GAMMA</xnat:ID>
+        <xnat:secondary_ID>GAMMAID</xnat:secondary_ID>
+        <xnat:name>GAMMA_project</xnat:name>
+        <xnat:description>GAMMA project</xnat:description>
+    </xnat:projectData>
+</xnat:projects>

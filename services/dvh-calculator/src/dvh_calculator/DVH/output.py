@@ -1,32 +1,16 @@
+"""Format and upload DVH calculation results to GraphDB as JSON-LD."""
+
 import datetime
-import os
-from pathlib import Path
 from uuid import uuid4
 
 import dicompylercore
 
+from dvh_calculator.config import yaml_config as _config
 from dvh_calculator.graphdb import upload_jsonld_to_graphdb
-from imaging_common import load_yaml_config
-
-_CONFIG_PATH = Path(os.getenv("CONFIG_PATH", str(Path(__file__).parents[3] / "config" / "config.yaml")))
-_config = load_yaml_config(_CONFIG_PATH)
-
-
-class DVH_Output:
-    def __init__(self):
-        self.structure_name = (None,)
-        self.min = None
-        self.max = None
-        self.mean = None
-        self.volume = None
 
 
 def return_output(patient_id, calculatedDose):
-    """:param patient_id:
-    :param calculatedDose:
-
-    :return:
-    """
+    """Upload DVH output to GraphDB."""
     uuid_for_calculation = uuid4()
     config_dict_gdb = _config.get("GraphDB", {})
     host = config_dict_gdb["host"]

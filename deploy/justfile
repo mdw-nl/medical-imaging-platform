@@ -1,0 +1,21 @@
+default:
+    @just --list
+
+up:
+    docker compose up -d --build
+
+down:
+    docker compose down
+
+logs service="":
+    docker compose logs -f {{service}}
+
+ps:
+    docker compose ps
+
+send-dicom folder host="localhost" port="104":
+    uv run ../scripts/send_dicom.py {{folder}} --host {{host}} --port {{port}}
+
+reset:
+    docker compose down -v
+    rm -rf data/

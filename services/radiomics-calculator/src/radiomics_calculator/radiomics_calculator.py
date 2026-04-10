@@ -1,3 +1,5 @@
+"""PyRadiomics feature extraction for CT images and ROI masks."""
+
 import csv
 import io
 import logging
@@ -15,17 +17,21 @@ SKIP_ROIS = {r.strip() for r in os.getenv("SKIP_ROIS", SKIP_ROIS_DEFAULT).split(
 
 
 class RadiomicsCalculator:
+    """Compute PyRadiomics features for one or more ROI masks against a CT image."""
+
     def __init__(self, settings="/radiomics_settings/Params.yaml"):
         self.settings = settings
         self.result_dict = {}
         self._extractor = radiomics.featureextractor.RadiomicsFeatureExtractor(self.settings)
 
     def calculate_single_roi(self, image, mask_path):
+        """Extract radiomics features for a single ROI mask against *image*."""
         logger.info("Calculating features for ROI: %s", Path(mask_path).name)
         mask = sitk.ReadImage(str(mask_path))
         return self._extractor.execute(image, mask)
 
     def get_csv_and_metadata(self, package):
+        """Serialize accumulated results to CSV and return (csv_content, metadata, filename)."""
         patient_id = package["patient_id"]
         study_uid = package["study_uid"]
 
@@ -52,6 +58,7 @@ class RadiomicsCalculator:
         return csv_content, metadata, filename
 
     def run(self, image_path, mask_paths, package):
+        """Run feature extraction on all non-skipped ROIs and return CSV output with metadata."""
         self.result_dict = {}
         image = sitk.ReadImage(str(image_path))
         logger.info("CT image loaded once for %d ROIs", len(mask_paths))

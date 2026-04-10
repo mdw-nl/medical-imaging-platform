@@ -1,0 +1,66 @@
+FORMAT dicom
+
+%header
+
+BLANK Manufacturer
+BLANK ReferringPhysicianName
+BLANK PatientBirthDate
+BLANK ContrastBolusAgent
+BLANK StructureSetDate
+BLANK StructureSetTime
+BLANK StudyID
+BLANK StudyDescription
+BLANK SeriesDescription
+
+KEEP SpecificCharacterSet
+KEEP InstanceCreationDate
+KEEP SOPClassUID
+KEEP StudyDate
+KEEP SeriesDate
+KEEP AcquisitionDate
+KEEP ContentDate
+KEEP AcquisitionDatetime
+KEEP StudyTime
+KEEP SeriesTime
+KEEP AcquisitionTime
+KEEP ContentTime
+KEEP FailedSOPInstanceUIDList
+KEEP CodeSetExtensionCreatorUID
+KEEP RefStudySeq
+KEEP RefPPSSeq
+KEEP RefImageSeq
+KEEP RefSOPClassUID
+KEEP TransactionUID
+KEEP SourceImageSeq
+KEEP IrradiationEventUID
+KEEP CreatorVersionUID
+KEEP PatientSex
+KEEP PatientAge
+KEEP PatientSize
+KEEP PatientWeight
+KEEP BodyPartExamined
+KEEP SynchronizationFrameOfReferenceUID
+KEEP ConcatenationUID
+KEEP DimensionOrganizationUID
+KEEP PaletteColorLUTUID
+KEEP LargePaletteColorLUTUid
+KEEP RefGenPurposeSchedProcStepTransUID
+KEEP TemplateExtensionOrganizationUID
+KEEP TemplateExtensionCreatorUID
+KEEP FiducialUID
+KEEP StorageMediaFilesetUID
+KEEP DigitalSignatureUID
+KEEP RelatedFrameOfReferenceUID
+KEEP DoseReferenceUID
+
+ADD PatientIdentityRemoved YES
+ADD PatientName func:CSV_lookup_func
+ADD PatientID func:CSV_lookup_func
+ADD DeidentificationMethod func:DeIdentificationMethod
+
+REPLACE AccessionNumber func:hash_func
+REPLACE PlacerOrderNumber func:hash_func
+REPLACE FillerOrderNumber func:hash_func
+REPLACE StructureSetLabel func:hash_func
+REPLACE VerifyingObserverName Removed by anonymization
+REPLACE PersonName Removed by anonymization

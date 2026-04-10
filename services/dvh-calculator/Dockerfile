@@ -16,6 +16,9 @@ RUN uv sync --frozen --package dvh-calculator --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
+
 EXPOSE 8000
 
 CMD ["python", "-m", "dvh_calculator"]

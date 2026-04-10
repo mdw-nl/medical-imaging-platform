@@ -1,0 +1,1315 @@
+{
+  "title": "Pipeline Overview",
+  "uid": "pipeline-overview",
+  "schemaVersion": 38,
+  "version": 5,
+  "refresh": "10s",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 50,
+      "type": "row",
+      "title": "Pipeline Totals",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 1,
+      "title": "DICOM Files Received",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM dicom_insert",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Unique Studies",
+      "type": "stat",
+      "gridPos": {
+        "x": 3,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT study_instance_uid) FROM dicom_insert",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Patients Anonymised",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM patient_id_map",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "PACS Archived",
+      "type": "stat",
+      "gridPos": {
+        "x": 9,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM pacs_archive WHERE status = 'archived'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "DVH Completed",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM calculation_status WHERE status = TRUE",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "NIfTI Completed",
+      "type": "stat",
+      "gridPos": {
+        "x": 15,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM nifti_conversion WHERE status = 'completed'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Radiomics Jobs",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM radiomics_manager",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Errors",
+      "type": "stat",
+      "gridPos": {
+        "x": 21,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT (SELECT COUNT(*) FROM calculation_status WHERE status = FALSE) + (SELECT COUNT(*) FROM nifti_conversion WHERE status = 'failed') AS errors",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "type": "row",
+      "title": "Pipeline Timing",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 40,
+      "title": "Avg Receive+Anonymize (s/patient)",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM duration))::numeric, 1) FROM (SELECT patient_id, MAX(timestamp) - MIN(timestamp) AS duration FROM dicom_insert GROUP BY patient_id HAVING COUNT(*) > 1) sub",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "title": "Anonymization Rate (files/s)",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 6,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND((COUNT(*)::numeric / NULLIF(EXTRACT(EPOCH FROM (MAX(timestamp) - MIN(timestamp))), 0))::numeric, 1) FROM dicom_insert",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "title": "Avg NIfTI Conversion (s/patient)",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 6,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - started_at)))::numeric, 1) FROM nifti_conversion WHERE status = 'completed'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "title": "Avg DVH (s/RTDOSE)",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT CASE WHEN COUNT(*) > 1 THEN ROUND((EXTRACT(EPOCH FROM (MAX(timestamp) - MIN(timestamp))) / NULLIF(COUNT(*) - 1, 0))::numeric, 1) END FROM calculation_status WHERE status = TRUE",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "title": "Avg PACS Archive (s/patient)",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 6,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM duration))::numeric, 1) FROM (SELECT patient_id, MAX(archived_at) - MIN(queued_at) AS duration FROM pacs_archive WHERE status = 'archived' GROUP BY patient_id) sub",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "title": "Pipeline End-to-End (s/patient)",
+      "type": "stat",
+      "gridPos": {
+        "x": 20,
+        "y": 6,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM (nc.completed_at - di.first_received)))::numeric, 1) FROM nifti_conversion nc JOIN (SELECT patient_id, MIN(timestamp) AS first_received FROM dicom_insert GROUP BY patient_id) di ON di.patient_id = nc.patient_id WHERE nc.status = 'completed'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "type": "row",
+      "title": "Throughput Over Time",
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 9,
+      "title": "DICOM Files by Modality",
+      "type": "barchart",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT modality, COUNT(*) AS count FROM dicom_insert GROUP BY modality ORDER BY count DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "xField": "modality",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 10,
+      "title": "DICOM Receipt Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 6,
+        "y": 11,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('minute', timestamp) AS time, COUNT(*) AS value FROM dicom_insert WHERE timestamp > NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "PACS Archiving Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('minute', archived_at) AS time, COUNT(*) AS value FROM pacs_archive WHERE archived_at > NOW() - INTERVAL '7 days' AND status = 'archived' GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "DVH Completion Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 18,
+        "y": 11,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('minute', timestamp) AS time, COUNT(*) AS value FROM calculation_status WHERE timestamp > NOW() - INTERVAL '7 days' AND status = TRUE GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "type": "row",
+      "title": "Per-Patient Progress",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 22,
+      "title": "Patient Pipeline Status",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "nifti_failed"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "transparent",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT p.generated_patient_id AS patient_id, COALESCE(ct.n, 0) AS ct_files, COALESCE(rs.n, 0) AS rtstruct, COALESCE(rd.n, 0) AS rtdose, COALESCE(rp.n, 0) AS rtplan, COALESCE(nc.completed, 0) AS nifti_ok, COALESCE(nc.failed, 0) AS nifti_failed, COALESCE(nc.masks, 0) AS masks, COALESCE(dvh.rois, 0) AS dvh_rois, COALESCE(rad.jobs, 0) AS radiomics, ROUND(EXTRACT(EPOCH FROM (di_t.last_file - di_t.first_file))::numeric, 1) AS anon_secs FROM patient_id_map p LEFT JOIN (SELECT patient_id, COUNT(*) n FROM dicom_insert WHERE modality='CT' GROUP BY 1) ct ON ct.patient_id = p.generated_patient_id LEFT JOIN (SELECT patient_id, COUNT(*) n FROM dicom_insert WHERE modality='RTSTRUCT' GROUP BY 1) rs ON rs.patient_id = p.generated_patient_id LEFT JOIN (SELECT patient_id, COUNT(*) n FROM dicom_insert WHERE modality='RTDOSE' GROUP BY 1) rd ON rd.patient_id = p.generated_patient_id LEFT JOIN (SELECT patient_id, COUNT(*) n FROM dicom_insert WHERE modality='RTPLAN' GROUP BY 1) rp ON rp.patient_id = p.generated_patient_id LEFT JOIN (SELECT patient_id, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) completed, SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) failed, SUM(COALESCE(mask_count,0)) masks FROM nifti_conversion GROUP BY 1) nc ON nc.patient_id = p.generated_patient_id LEFT JOIN (SELECT di.patient_id, COUNT(DISTINCT dp.roi_name) rois FROM dvh_package dp JOIN dicom_insert di ON dp.sop_instance_uid = di.sop_instance_uid GROUP BY 1) dvh ON dvh.patient_id = p.generated_patient_id LEFT JOIN (SELECT di.patient_id, COUNT(DISTINCT rm.radiomics_id) jobs FROM radiomics_manager rm JOIN dicom_insert di ON rm.sop_instance_uid = di.sop_instance_uid GROUP BY 1) rad ON rad.patient_id = p.generated_patient_id LEFT JOIN (SELECT patient_id, MIN(timestamp) AS first_file, MAX(timestamp) AS last_file FROM dicom_insert GROUP BY patient_id) di_t ON di_t.patient_id = p.generated_patient_id ORDER BY p.generated_patient_id",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "type": "row",
+      "title": "XNAT Status",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 60,
+      "title": "XNAT Accepted (studies)",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT study_instance_uid) FROM pacs_archive WHERE status = 'archived'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "title": "XNAT Verified",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 31,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          }
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT study_instance_uid) FROM pacs_archive WHERE xnat_status = 'verified'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "title": "XNAT Pending",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 31,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT study_instance_uid) FROM pacs_archive WHERE status = 'archived' AND xnat_status = 'pending'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "title": "XNAT Conflicts",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT study_instance_uid) FROM pacs_archive WHERE xnat_status = 'conflict'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "title": "XNAT Verified by Modality",
+      "type": "barchart",
+      "gridPos": {
+        "x": 16,
+        "y": 31,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT modality, COUNT(*) as count FROM pacs_archive WHERE xnat_status = 'verified' GROUP BY modality ORDER BY count DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "xField": "modality",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 65,
+      "title": "Per-Patient XNAT Completeness",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT pa.patient_id, SUM(CASE WHEN pa.modality='CT' AND pa.xnat_status='verified' THEN 1 ELSE 0 END) as ct_verified, SUM(CASE WHEN pa.modality='RTSTRUCT' AND pa.xnat_status='verified' THEN 1 ELSE 0 END) as rtstruct_verified, SUM(CASE WHEN pa.modality='RTDOSE' AND pa.xnat_status='verified' THEN 1 ELSE 0 END) as rtdose_verified, SUM(CASE WHEN pa.modality='RTPLAN' AND pa.xnat_status='verified' THEN 1 ELSE 0 END) as rtplan_verified, SUM(CASE WHEN pa.xnat_status='pending' THEN 1 ELSE 0 END) as pending, SUM(CASE WHEN pa.xnat_status='conflict' THEN 1 ELSE 0 END) as conflicts FROM pacs_archive pa GROUP BY pa.patient_id ORDER BY pa.patient_id",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "type": "row",
+      "title": "NIfTI Conversion",
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 5,
+      "title": "PACS Pending",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM pacs_archive WHERE status = 'pending'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "NIfTI Failed",
+      "type": "stat",
+      "gridPos": {
+        "x": 3,
+        "y": 44,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM nifti_conversion WHERE status = 'failed'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "NIfTI Pending",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 44,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM nifti_conversion WHERE status = 'pending'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Total ROI Masks",
+      "type": "stat",
+      "gridPos": {
+        "x": 9,
+        "y": 44,
+        "w": 3,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM nifti_masks",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "NIfTI Conversion Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 44,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('minute', completed_at) AS time, COUNT(*) AS value FROM nifti_conversion WHERE status = 'completed' AND completed_at > NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "type": "row",
+      "title": "DVH Analysis",
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 24,
+      "title": "Unique ROIs with DVH",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT roi_name) FROM dvh_package",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "title": "DVH Results Total",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 53,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM dvh_result",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "title": "DVH ROI Distribution",
+      "type": "piechart",
+      "gridPos": {
+        "x": 8,
+        "y": 53,
+        "w": 8,
+        "h": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT dp.roi_name as \"ROI\", COUNT(*) as \"Count\" FROM dvh_package dp GROUP BY dp.roi_name ORDER BY \"Count\" DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Count$/"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "id": 32,
+      "title": "Mean Dose by ROI (Avg Across Patients)",
+      "type": "barchart",
+      "gridPos": {
+        "x": 0,
+        "y": 63,
+        "w": 24,
+        "h": 20
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT dp.roi_name, ROUND(AVG(dr.mean_dose)::numeric, 2) as avg_mean_dose, ROUND(AVG(dr.max_dose)::numeric, 2) as avg_max_dose FROM dvh_result dr JOIN dvh_package dp ON dr.result_id = dp.result_id GROUP BY dp.roi_name ORDER BY avg_mean_dose DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "xField": "roi_name",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 33,
+      "title": "Dose Metrics by ROI (D2/D50/D95)",
+      "type": "barchart",
+      "gridPos": {
+        "x": 0,
+        "y": 83,
+        "w": 24,
+        "h": 20
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT dp.roi_name, ROUND(AVG(dr.d2)::numeric, 2) as avg_d2, ROUND(AVG(dr.d50)::numeric, 2) as avg_d50, ROUND(AVG(dr.d95)::numeric, 2) as avg_d95 FROM dvh_result dr JOIN dvh_package dp ON dr.result_id = dp.result_id GROUP BY dp.roi_name ORDER BY avg_d50 DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "xField": "roi_name",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 26,
+      "title": "Recent DVH Results",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 103,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT di.patient_id, dp.roi_name, dr.d2, dr.d50, dr.d95, dr.d98, dr.min_dose, dr.mean_dose, dr.max_dose FROM dvh_result dr JOIN dvh_package dp ON dr.result_id = dp.result_id JOIN dicom_insert di ON dp.sop_instance_uid = di.sop_instance_uid ORDER BY dr.result_id DESC LIMIT 50",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "type": "row",
+      "title": "Radiomics Analysis",
+      "gridPos": {
+        "x": 0,
+        "y": 111,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 28,
+      "title": "Unique ROIs with Radiomics",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 112,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT roi_name) FROM radiomics_results",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "title": "Total Feature Rows",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 112,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) FROM radiomics_results",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "title": "Patients with Radiomics",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 112,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT di.patient_id) FROM radiomics_manager rm JOIN dicom_insert di ON rm.sop_instance_uid = di.sop_instance_uid",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "title": "Radiomics ROI Distribution",
+      "type": "piechart",
+      "gridPos": {
+        "x": 12,
+        "y": 112,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT roi_name as \"ROI\", COUNT(*) as \"Count\" FROM radiomics_results GROUP BY roi_name ORDER BY \"Count\" DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Count$/"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "id": 37,
+      "title": "Radiomics Features: Image Stats by ROI",
+      "type": "barchart",
+      "gridPos": {
+        "x": 0,
+        "y": 122,
+        "w": 24,
+        "h": 20
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT roi_name, ROUND(AVG(diag_image_mean)::numeric, 2) as avg_image_mean, ROUND(AVG(diag_image_minimum)::numeric, 2) as avg_image_min, ROUND(AVG(diag_image_maximum)::numeric, 2) as avg_image_max FROM radiomics_results GROUP BY roi_name ORDER BY avg_image_mean DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "xField": "roi_name",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 30,
+      "title": "Recent Radiomics Jobs",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 142,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "pipeline-postgres"
+      },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT di.patient_id, rm.sop_instance_uid AS study_uid, di.timestamp AS received_at, COUNT(DISTINCT rr.roi_name) AS roi_count FROM radiomics_manager rm JOIN dicom_insert di ON rm.sop_instance_uid = di.sop_instance_uid LEFT JOIN radiomics_results rr ON rr.radiomics_id = rm.radiomics_id GROUP BY di.patient_id, rm.sop_instance_uid, di.timestamp ORDER BY di.timestamp DESC LIMIT 50",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

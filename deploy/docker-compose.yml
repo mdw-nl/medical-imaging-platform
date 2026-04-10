@@ -1,0 +1,209 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-testdb}
+      XNAT_DATASOURCE_USERNAME: ${XNAT_DATASOURCE_USERNAME:-xnat}
+      XNAT_DATASOURCE_PASSWORD: ${XNAT_DATASOURCE_PASSWORD:?Set XNAT_DATASOURCE_PASSWORD in .env}
+      XNAT_DATASOURCE_NAME: ${XNAT_DATASOURCE_NAME:-xnat}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ${POSTGRES_DATA:-./data/postgres}:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d
+    networks:
+      pipeline:
+        aliases:
+          - xnat-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB:-testdb} -U $${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  imaging-hub:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    build:
+      context: ..
+      dockerfile: services/imaging-hub/Dockerfile
+    container_name: imaging-hub
+    environment:
+      - PYTHONUNBUFFERED=1
+      - USE_NIFTI=${USE_NIFTI:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
+      - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      - STAGING_TMPFS_DIR=/dicom-staging
+      - STAGING_OVERFLOW_DIR=/dicom-staging-overflow
+      - STAGING_TMPFS_THRESHOLD_PCT=85
+      - DATA_DIR=/dicomsorter/data
+      - CONFIG_PATH=/app/services/imaging-hub/config/config.yaml
+    restart: on-failure
+    ports:
+      - "${DICOM_PORT:-104}:104"
+    networks:
+      - pipeline
+    tmpfs:
+      - /dicom-staging:size=${STAGING_TMPFS_SIZE:-2g},mode=1777
+    volumes:
+      - ${ASSOCIATION_DATA:-./data/associationdata}:/dicomsorter/data
+      - ./recipes:/app/services/imaging-hub/recipes/
+      - ./config/imaging-hub.yaml:/app/services/imaging-hub/config/config.yaml
+      - dicom-staging-overflow:/dicom-staging-overflow
+
+  radiomics-calculator:
+    build:
+      context: ..
+      dockerfile: services/radiomics-calculator/Dockerfile
+    container_name: radiomics-calculator
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DICOM_SERVICE_URL=http://imaging-hub:9000
+      - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
+      - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      - POLL_CRON=${RADIOMICS_POLL_CRON:-*/1 * * * *}
+      - SKIP_ROIS=${SKIP_ROIS:-BODY,SHOULDERS,POSTERIOR_NECK,RING_PTV_LOW,RING_PTV_HIGH}
+      - SEND_POSTGRES=${SEND_POSTGRES:-true}
+      - SEND_XNAT=${SEND_XNAT:-false}
+    restart: on-failure
+    depends_on:
+      imaging-hub:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/radiomics.yaml:/app/services/radiomics-calculator/config/config.yaml
+      - ./radiomics-settings:/radiomics_settings
+      - ${ASSOCIATION_DATA:-./data/associationdata}:/dicomsorter/data
+    networks:
+      - pipeline
+
+  dvh-calculator:
+    build:
+      context: ..
+      dockerfile: services/dvh-calculator/Dockerfile
+    container_name: dvh-calculator
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DICOM_SERVICE_URL=http://imaging-hub:9000
+      - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
+      - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      - POLL_CRON=${DVH_POLL_CRON:-*/1 * * * *}
+      - UPLOAD_DESTINATION=${UPLOAD_DESTINATION:-postgres}
+    restart: on-failure
+    depends_on:
+      imaging-hub:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${DVH_DATA:-./data/dvh}:/app/DVH_data
+      - ./config/dvh.yaml:/app/services/dvh-calculator/config/config.yaml
+      - ${ASSOCIATION_DATA:-./data/associationdata}:/dicomsorter/data
+    networks:
+      - pipeline
+
+  pacs-archiver:
+    build:
+      context: ..
+      dockerfile: services/pacs-archiver/Dockerfile
+    container_name: pacs-archiver
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DICOM_SERVICE_URL=http://imaging-hub:9000
+      - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
+      - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      - POLL_CRON=${PACS_POLL_CRON:-*/5 * * * *}
+      - PACS_SCP_HOST=${PACS_SCP_HOST:-xnat-web}
+      - PACS_SCP_PORT=${PACS_SCP_PORT:-8104}
+      - PACS_SCP_AE_TITLE=${PACS_SCP_AE_TITLE:-}
+      - XNAT_API_URL=http://xnat-web:8080
+      - XNAT_API_USER=${XNAT_API_USER:-admin}
+      - XNAT_API_PASSWORD=${XNAT_API_PASSWORD:?Set XNAT_API_PASSWORD in .env}
+    restart: on-failure
+    depends_on:
+      imaging-hub:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/pacs-archiver.yaml:/app/services/pacs-archiver/config/config.yaml
+      - ${ASSOCIATION_DATA:-./data/associationdata}:/dicomsorter/data
+    networks:
+      - pipeline
+
+  xnat-web:
+    image: ghcr.io/mdw-nl/mdw-xnat:1.9
+    container_name: xnat-web
+    environment:
+      XNAT_VERSION: ${XNAT_VERSION:-1.8.10}
+      XNAT_SMTP_ENABLED: ${XNAT_SMTP_ENABLED:-false}
+      XNAT_SMTP_HOSTNAME: ${XNAT_SMTP_HOSTNAME:-fake.fake}
+      XNAT_SMTP_PORT: ${XNAT_SMTP_PORT:-}
+      XNAT_SMTP_AUTH: ${XNAT_SMTP_AUTH:-}
+      XNAT_SMTP_USERNAME: ${XNAT_SMTP_USERNAME:-xnat}
+      XNAT_SMTP_PASSWORD: ${XNAT_SMTP_PASSWORD:?Set XNAT_SMTP_PASSWORD in .env}
+      XNAT_DATASOURCE_DRIVER: org.postgresql.Driver
+      XNAT_DATASOURCE_URL: jdbc:postgresql://postgres/${XNAT_DATASOURCE_NAME:-xnat}
+      XNAT_DATASOURCE_USERNAME: ${XNAT_DATASOURCE_USERNAME:-xnat}
+      XNAT_DATASOURCE_PASSWORD: ${XNAT_DATASOURCE_PASSWORD:?Set XNAT_DATASOURCE_PASSWORD in .env}
+      TOMCAT_XNAT_FOLDER: ROOT
+      XNAT_ROOT: /data/xnat
+      XNAT_HOME: /data/xnat/home
+      XNAT_EMAIL: ${XNAT_EMAIL:-admin@example.com}
+      CATALINA_OPTS: -Xms${XNAT_MIN_HEAP:-256m} -Xmx${XNAT_MAX_HEAP:-1g} -Dxnat.home=/data/xnat/home
+      XNAT_ADMIN_USER: ${XNAT_ADMIN_USER:-admin}
+      XNAT_ADMIN_PASSWORD: ${XNAT_ADMIN_PASSWORD:?Set XNAT_ADMIN_PASSWORD in .env}
+      XNAT_DB_HOST: postgres
+    ports:
+      - "${XNAT_HTTP_PORT:-8080}:8080"
+      - "127.0.0.1:${XNAT_DICOM_PORT:-8104}:8104"
+    volumes:
+      - ./xnat/plugins:/data/xnat/home/plugins
+      - ${XNAT_DATA:-./data/xnat}/home/logs:/data/xnat/home/logs
+      - ${XNAT_DATA:-./data/xnat}/archive:/data/xnat/archive
+      - ${XNAT_DATA:-./data/xnat}/build:/data/xnat/build
+      - ${XNAT_DATA:-./data/xnat}/cache:/data/xnat/cache
+      - ./xnat/configure/SCP_receiver.json:/XNAT_conf/XNAT_configure/SCP_receiver.json
+      - ./xnat/configure/project.xml:/XNAT_conf/XNAT_configure/project.xml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pipeline
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD in .env}
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/pipeline-overview.json
+      - POSTGRES_DB=${POSTGRES_DB:-testdb}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - postgres
+    networks:
+      - pipeline
+
+networks:
+  pipeline:
+    driver: bridge
+
+volumes:
+  grafana-data:
+  dicom-staging-overflow:

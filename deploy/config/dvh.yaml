@@ -1,0 +1,14 @@
+postgres:
+  host: "postgres"
+  port: "5432"
+  username: "postgres"
+
+  db: "testdb"
+
+dvh-calculations:
+  -
+    P-LUNG:
+      roi: "LUNG_L + LUNG_R"
+  -
+    MeanDoseIpsiLateralParotidGland:
+      roi: "PAROTID_IPSI"

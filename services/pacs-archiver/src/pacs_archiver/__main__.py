@@ -1,3 +1,5 @@
+"""PACS archiver service that polls imaging-hub for DICOM files and sends them to a PACS SCP."""
+
 import logging
 import os
 import sys
@@ -5,7 +7,7 @@ from pathlib import Path
 
 import requests
 
-from imaging_common import APIPoller, PostgresInterface, load_yaml_config
+from imaging_common import APIPoller, PostgresInterface
 from pacs_archiver.sender import DICOMtoPACS
 from pacs_archiver.verifier import XnatVerifier
 
@@ -17,33 +19,35 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-DICOM_SERVICE_URL = os.getenv("DICOM_SERVICE_URL", "http://dicom-service:9000")
+DICOM_SERVICE_URL = os.getenv("DICOM_SERVICE_URL", "http://imaging-hub:9000")
+_FALLBACK_AE_TITLE = os.getenv("PACS_SCP_AE_TITLE")
+_API_KEY = os.getenv("IMAGING_API_KEY")
 
 
-def connect_db():
-    config_path = Path(os.getenv("CONFIG_PATH", str(Path(__file__).parents[2] / "config" / "config.yaml")))
-    config = load_yaml_config(config_path)
-    cfg = config["postgres"]
-    db = PostgresInterface(
-        host=cfg["host"],
-        database=cfg["db"],
-        user=cfg["username"],
-        password=cfg["password"],
-        port=cfg["port"],
-    )
-    db.connect()
-    return db
+def _api_headers() -> dict:
+    """Return HTTP headers with the API key if configured."""
+    headers = {}
+    if _API_KEY:
+        headers["X-API-Key"] = _API_KEY
+    return headers
 
 
 def process_archive_package(package: dict):
-    file_paths = [p["file_path"] for p in package.get("sops", []) if p.get("file_path")]
-    sop_uids = [p["sop_instance_uid"] for p in package.get("sops", [])]
+    """Send a batch of DICOM SOPs to PACS and report results back to imaging-hub."""
+    sops = package.get("sops", [])
+    file_paths = [p["file_path"] for p in sops if p.get("file_path")]
+    sop_uids = [p["sop_instance_uid"] for p in sops]
 
     if not file_paths:
         logger.warning("No file paths in archive package, skipping")
         return
 
-    sender = DICOMtoPACS()
+    project = sops[0].get("project") if sops else None
+    ae_title = project or _FALLBACK_AE_TITLE
+    if not ae_title:
+        logger.error("No project in archive package and PACS_SCP_AE_TITLE not set, skipping")
+        return
+    sender = DICOMtoPACS(ae_title=ae_title)
     results = []
 
     try:
@@ -63,13 +67,15 @@ def process_archive_package(package: dict):
         requests.post(
             f"{DICOM_SERVICE_URL}/archive_callback",
             json={"results": results},
+            headers=_api_headers(),
             timeout=30,
         )
     except Exception:
-        logger.exception("Failed to report archive results back to dicom-ingest")
+        logger.exception("Failed to report archive results back to imaging-hub")
 
 
 def process_poll_response(package: dict):
+    """Send a single DICOM SOP to PACS and report the result back to imaging-hub."""
     sop = package
     file_path = sop.get("file_path")
     sop_uid = sop.get("sop_instance_uid")
@@ -78,7 +84,12 @@ def process_poll_response(package: dict):
         logger.warning("No file path for SOP %s, skipping", sop_uid)
         return
 
-    sender = DICOMtoPACS()
+    project = sop.get("project")
+    ae_title = project or _FALLBACK_AE_TITLE
+    if not ae_title:
+        logger.error("No project for SOP %s and PACS_SCP_AE_TITLE not set, skipping", sop_uid)
+        return
+    sender = DICOMtoPACS(ae_title=ae_title)
     success = False
     try:
         sender.send_files([file_path])
@@ -91,6 +102,7 @@ def process_poll_response(package: dict):
         requests.post(
             f"{DICOM_SERVICE_URL}/archive_callback",
             json={"results": [{"sop_instance_uid": sop_uid, "success": success}]},
+            headers=_api_headers(),
             timeout=30,
         )
     except Exception:
@@ -98,7 +110,8 @@ def process_poll_response(package: dict):
 
 
 if __name__ == "__main__":
-    db = connect_db()
+    config_path = Path(os.getenv("CONFIG_PATH", str(Path(__file__).parents[2] / "config" / "config.yaml")))
+    db = PostgresInterface.connect_from_yaml(config_path)
 
     verifier = XnatVerifier(db)
     verifier.start()

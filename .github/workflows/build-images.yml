@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       imaging-common: ${{ steps.filter.outputs.imaging-common }}
-      dicom-ingest: ${{ steps.filter.outputs.dicom-ingest }}
+      imaging-hub: ${{ steps.filter.outputs.imaging-hub }}
       dvh-calculator: ${{ steps.filter.outputs.dvh-calculator }}
       radiomics-calculator: ${{ steps.filter.outputs.radiomics-calculator }}
       pacs-archiver: ${{ steps.filter.outputs.pacs-archiver }}
@@ -32,8 +32,8 @@ jobs:
               - 'packages/imaging-common/**'
               - 'pyproject.toml'
               - 'uv.lock'
-            dicom-ingest:
-              - 'services/dicom-ingest/**'
+            imaging-hub:
+              - 'services/imaging-hub/**'
             dvh-calculator:
               - 'services/dvh-calculator/**'
             radiomics-calculator:
@@ -50,8 +50,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - service: dicom-ingest
-            changed: ${{ needs.detect-changes.outputs.dicom-ingest }}
+          - service: imaging-hub
+            changed: ${{ needs.detect-changes.outputs.imaging-hub }}
           - service: dvh-calculator
             changed: ${{ needs.detect-changes.outputs.dvh-calculator }}
           - service: radiomics-calculator
