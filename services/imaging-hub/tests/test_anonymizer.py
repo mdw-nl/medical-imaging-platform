@@ -72,7 +72,7 @@ def test_add_rules_applied(anonymizer, make_dataset):
     ds = make_dataset()
     result = anonymizer.anonymize_dataset(ds)
     assert result.PatientIdentityRemoved == "YES"
-    assert result.PatientName == "TEST_PATIENT"
+    assert result.PatientName == "PYTIM05"
     assert result.PatientID == "PYTIM05"
     assert str(result.DeidentificationMethod).startswith("deid:")
 

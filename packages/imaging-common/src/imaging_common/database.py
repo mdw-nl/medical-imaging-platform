@@ -1,5 +1,6 @@
 """Thread-safe PostgreSQL interface with automatic reconnection."""
 
+import contextlib
 import logging
 import threading
 from pathlib import Path
@@ -77,10 +78,8 @@ class PostgresInterface:
     def connect(self):
         """Establish a database connection, retrying on failure."""
         if self.conn and not self.conn.closed:
-            try:
+            with contextlib.suppress(Exception):
                 self.conn.close()
-            except Exception:
-                pass
         for attempt in range(self._retry_attempts):
             try:
                 self.conn = psycopg2.connect(

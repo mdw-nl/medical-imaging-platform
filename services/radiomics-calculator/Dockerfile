@@ -4,17 +4,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
 COPY packages/imaging-common/ packages/imaging-common/
 COPY services/radiomics-calculator/ services/radiomics-calculator/
 
-RUN uv sync --frozen --package radiomics-calculator --no-dev --extra runtime
-
-ENV PATH="/app/.venv/bin:$PATH"
+RUN pip install --no-cache-dir ./packages/imaging-common/ "./services/radiomics-calculator/[runtime]"
 
 RUN addgroup --system app && adduser --system --ingroup app app
 USER app

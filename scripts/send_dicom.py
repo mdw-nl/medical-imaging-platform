@@ -16,9 +16,7 @@ from pynetdicom.presentation import StoragePresentationContexts
 def _collect_dcm_paths(folder_path):
     paths = []
     for root, _, files in os.walk(folder_path):
-        for file in files:
-            if file.lower().endswith(".dcm"):
-                paths.append(Path(root) / file)
+        paths.extend(Path(root) / file for file in files if file.lower().endswith(".dcm"))
     return paths
 
 

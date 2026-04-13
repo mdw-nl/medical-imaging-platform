@@ -42,8 +42,10 @@ services:
       - STAGING_TMPFS_DIR=/dicom-staging
       - STAGING_OVERFLOW_DIR=/dicom-staging-overflow
       - STAGING_TMPFS_THRESHOLD_PCT=85
+      - DEFER_NIFTI=${DEFER_NIFTI:-true}
       - DATA_DIR=/dicomsorter/data
       - CONFIG_PATH=/app/services/imaging-hub/config/config.yaml
+      - RECIPES_PATH=/app/services/imaging-hub/recipes
     restart: on-failure
     ports:
       - "${DICOM_PORT:-104}:104"

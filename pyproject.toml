@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "imaging-workspace"
 version = "0.0.0"
@@ -5,12 +9,12 @@ requires-python = ">=3.12"
 
 dependencies = []
 
+[tool.setuptools]
+packages = []
+
 [project.optional-dependencies]
 # pydicom <3: v3 breaks file_meta (requires FileMetaDataset), changes VR handling, and drops legacy attrs
 send = ["pydicom<3", "pynetdicom"]
-
-[tool.uv.workspace]
-members = ["packages/*", "services/*"]
 
 [tool.ruff]
 line-length = 120
@@ -84,11 +88,13 @@ strict = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
-"**/tests/**" = ["S101"]
+"**/tests/**" = ["S101", "S106"]
 "deploy/**" = ["T201", "S603", "S607"]
+"scripts/**" = ["T201"]
 "services/radiomics-calculator/**" = [
     "COM818", "TRY400", "TRY401",
 ]
+"services/imaging-hub/src/imaging_hub/anonymization/anonymizer.py" = ["PLC0415", "TC001"]
 "services/dvh-calculator/**" = [
     "PD011",
     "S112",

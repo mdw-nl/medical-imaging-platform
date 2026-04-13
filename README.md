@@ -33,7 +33,7 @@ Wait ~15 seconds for PostgreSQL to become healthy and services to start, then yo
 ### Sending Test Data
 
 ```bash
-pip install pydicom pynetdicom
+pip install ".[send]"
 python ./scripts/send_dicom.py /path/to/your/dicom/data --host localhost --port 104 --scp-ae-title ALPHA
 ```
 
@@ -146,7 +146,7 @@ medical-imaging-platform/
 │   └── send_dicom.py          # DICOM C-STORE test sender
 ├── docs/
 │   └── diagrams.md            # Detailed Mermaid architecture diagrams
-└── pyproject.toml             # uv workspace root
+└── pyproject.toml             # workspace root (ruff config, dev deps)
 ```
 
 ## Configuration
@@ -193,14 +193,14 @@ This lets downstream projects reference the images directly and only provide pro
 ## Development
 
 ```bash
-# Install all workspace packages in dev mode
-uv sync
+# Install imaging-common and a service in dev mode
+pip install -e ./packages/imaging-common/ -e ./services/imaging-hub/
 
 # Run linting
-uv run ruff check
+ruff check
 
 # Run a single service locally (outside Docker)
-uv run python -m imaging_hub
+python -m imaging_hub
 ```
 
-The workspace is managed by [uv](https://docs.astral.sh/uv/) with a monorepo layout. All services share `imaging-common` as a workspace dependency.
+All services share `imaging-common` as a workspace dependency. Install it alongside any service you want to work on.

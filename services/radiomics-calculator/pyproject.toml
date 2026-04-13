@@ -15,7 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 runtime = [
-    "pyradiomics",
+    "pyradiomics @ git+https://github.com/AIM-Harvard/pyradiomics.git",
     "simpleitk",
 ]
 
@@ -23,9 +23,8 @@ runtime = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/radiomics_calculator"]
-
-[tool.uv.sources]
-imaging-common = { workspace = true }
-pyradiomics = { git = "https://github.com/AIM-Harvard/pyradiomics.git" }

@@ -45,12 +45,12 @@ def set_up_db(settings):
 if __name__ == "__main__":
     from pathlib import Path
 
-    config_path = Path(__file__).parents[2] / "config" / "config.yaml"
+    config_path = Path(os.getenv("CONFIG_PATH", Path(__file__).parents[2] / "config" / "config.yaml"))
     settings = load_settings(config_path)
 
     database = set_up_db(settings)
 
-    recipes_path = str(Path(__file__).parents[2] / "recipes")
+    recipes_path = os.getenv("RECIPES_PATH", str(Path(__file__).parents[2] / "recipes"))
 
     nifti_converter = None
     if USE_NIFTI:

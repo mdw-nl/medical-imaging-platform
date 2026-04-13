@@ -131,8 +131,8 @@ class NiftiConverter:
         }
         self._executor = ProcessPoolExecutor(max_workers=2, mp_context=None)
 
-    def schedule(self, study_uid, patient_id):
-        """Queue NIfTI conversion for each RTSTRUCT in the given study that has not been converted yet."""
+    def record_pending(self, study_uid, patient_id):
+        """Insert pending nifti_conversion rows without starting the actual conversion."""
         rtstruct_rows = self._db.fetch_all(
             "SELECT sop_instance_uid, referenced_ct_series_uid FROM dicom_insert "
             "WHERE study_instance_uid = %s AND modality = 'RTSTRUCT'",
@@ -164,10 +164,26 @@ class NiftiConverter:
                     datetime.now(UTC),
                 ),
             )
+
+    def run_pending(self):
+        """Submit all pending nifti_conversion rows to the process pool."""
+        rows = self._db.fetch_all(
+            "SELECT study_instance_uid, patient_id, rtstruct_sop_uid, ct_series_uid "
+            "FROM nifti_conversion WHERE status = 'pending'",
+        )
+        if not rows:
+            return
+        for study_uid, patient_id, rtstruct_sop_uid, ct_series_uid in rows:
             future = self._executor.submit(
                 _convert_task, self._db_params, study_uid, patient_id, rtstruct_sop_uid, ct_series_uid
             )
             future.add_done_callback(lambda f, sop=rtstruct_sop_uid: self._on_done(f, sop))
+        logger.info("Submitted %d pending NIfTI conversions", len(rows))
+
+    def schedule(self, study_uid, patient_id):
+        """Record and immediately execute NIfTI conversions (eager mode)."""
+        self.record_pending(study_uid, patient_id)
+        self.run_pending()
 
     def _on_done(self, future, rtstruct_sop_uid):
         exc = future.exception()

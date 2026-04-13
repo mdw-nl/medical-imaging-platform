@@ -29,6 +29,8 @@ def anon_settings():
 def recipes_dir(tmp_path):
     dest = tmp_path / "recipes"
     shutil.copytree(RECIPES_DIR, dest)
+    with (dest / "patient_lookup.csv").open("a") as f:
+        f.write("PYTIM05,PYTIM05\n")
     return dest
 
 

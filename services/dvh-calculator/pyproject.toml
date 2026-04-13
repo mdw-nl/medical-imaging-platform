@@ -25,6 +25,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dvh_calculator"]
-
-[tool.uv.sources]
-imaging-common = { workspace = true }

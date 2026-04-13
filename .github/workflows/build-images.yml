@@ -7,7 +7,6 @@ on:
       - "packages/**"
       - "services/**"
       - "pyproject.toml"
-      - "uv.lock"
 
 env:
   REGISTRY: ghcr.io
@@ -31,7 +30,6 @@ jobs:
             imaging-common:
               - 'packages/imaging-common/**'
               - 'pyproject.toml'
-              - 'uv.lock'
             imaging-hub:
               - 'services/imaging-hub/**'
             dvh-calculator:

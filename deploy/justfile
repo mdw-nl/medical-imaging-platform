@@ -13,8 +13,9 @@ logs service="":
 ps:
     docker compose ps
 
-send-dicom folder host="localhost" port="104":
-    uv run ../scripts/send_dicom.py {{folder}} --host {{host}} --port {{port}}
+send-dicom folder host="localhost" port="104" scp-ae-title="ALPHA":
+    pip install --quiet "../[send]"
+    python ../scripts/send_dicom.py {{folder}} --host {{host}} --port {{port}} --scp-ae-title {{scp-ae-title}}
 
 reset:
     docker compose down -v

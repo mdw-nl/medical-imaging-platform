@@ -27,6 +27,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/imaging_hub"]
-
-[tool.uv.sources]
-imaging-common = { workspace = true }

@@ -14,6 +14,7 @@ from imaging_hub.association_tracker import AssociationTracker
 from imaging_hub.background_processor import BackgroundProcessor, get_or_create_generated_patient_id
 from imaging_hub.queries import INSERT_QUERY_DICOM_ASS
 from imaging_hub.settings import (
+    DEFER_NIFTI,
     STAGING_OVERFLOW_DIR,
     STAGING_TMPFS_DIR,
     STAGING_TMPFS_THRESHOLD_PCT,
@@ -185,7 +186,10 @@ class DicomStoreHandler:
 
         for (study_uid,) in studies:
             if self._nifti_converter is not None:
-                self._nifti_converter.schedule(study_uid, anon_patient_id)
+                if DEFER_NIFTI:
+                    self._nifti_converter.record_pending(study_uid, anon_patient_id)
+                else:
+                    self._nifti_converter.schedule(study_uid, anon_patient_id)
 
         gc.collect()
 
@@ -198,3 +202,7 @@ class DicomStoreHandler:
         )
         if state.error_count > 0:
             logger.warning("Association %s finished with %s errors", assoc_id, state.error_count)
+
+        if DEFER_NIFTI and self._nifti_converter is not None:
+            logger.info("Association %s: starting deferred NIfTI conversions", assoc_id)
+            self._nifti_converter.run_pending()
