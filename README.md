@@ -33,8 +33,7 @@ Wait ~15 seconds for PostgreSQL to become healthy and services to start, then yo
 ### Sending Test Data
 
 ```bash
-pip install ".[send]"
-python ./scripts/send_dicom.py /path/to/your/dicom/data --host localhost --port 104 --scp-ae-title ALPHA
+just send-dicom /path/to/dicom/data
 ```
 
 Or using any DICOM sender (e.g. dcm4che `storescu`):
