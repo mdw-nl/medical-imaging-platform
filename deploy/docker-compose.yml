@@ -66,6 +66,7 @@ services:
     container_name: radiomics-calculator
     environment:
       - PYTHONUNBUFFERED=1
+      - CONFIG_PATH=/app/services/radiomics-calculator/config/config.yaml
       - DICOM_SERVICE_URL=http://imaging-hub:9000
       - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
       - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -93,6 +94,7 @@ services:
     container_name: dvh-calculator
     environment:
       - PYTHONUNBUFFERED=1
+      - CONFIG_PATH=/app/services/dvh-calculator/config/config.yaml
       - DICOM_SERVICE_URL=http://imaging-hub:9000
       - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
       - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -118,6 +120,7 @@ services:
     container_name: pacs-archiver
     environment:
       - PYTHONUNBUFFERED=1
+      - CONFIG_PATH=/app/services/pacs-archiver/config/config.yaml
       - DICOM_SERVICE_URL=http://imaging-hub:9000
       - IMAGING_API_KEY=${IMAGING_API_KEY:?Set IMAGING_API_KEY in .env}
       - IMAGING_POSTGRES__PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
