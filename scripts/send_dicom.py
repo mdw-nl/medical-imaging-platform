@@ -8,9 +8,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from pydicom.uid import ExplicitVRLittleEndian
-from pynetdicom import AE, debug_logger
+from pydicom.uid import (
+    ExplicitVRLittleEndian,
+    ImplicitVRLittleEndian,
+)
+from pynetdicom import AE, _config, debug_logger
 from pynetdicom.presentation import StoragePresentationContexts
+
+_config.STORE_SEND_CHUNKED_DATASET = True
 
 
 def _collect_dcm_paths(folder_path):
@@ -38,7 +43,7 @@ def send_fold(folder_path, scp_ip, scp_port, ae_title="MY_SCU", scp_ae_title="MY
     }
 
     for context in StoragePresentationContexts:
-        ae.add_requested_context(context.abstract_syntax, ExplicitVRLittleEndian)
+        ae.add_requested_context(context.abstract_syntax, [ExplicitVRLittleEndian, ImplicitVRLittleEndian])
 
     dcm_paths = _collect_dcm_paths(folder_path)
     stats["total_files"] = len(dcm_paths)
