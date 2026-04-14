@@ -550,12 +550,19 @@ Standard PyRadiomics configuration. Controls image normalisation, bin width, ena
 | Variable | Default | Effect |
 |---|---|---|
 | `USE_NIFTI` | `true` | Enable NIfTI conversion support |
+| `DEFER_NIFTI` | `true` | Defer NIfTI conversion to reduce peak memory usage |
 | `LOG_LEVEL` | `INFO` | Python logging level |
+| `DICOM_PORT` | `104` | Host port mapped to the DICOM listener |
+| `STAGING_TMPFS_SIZE` | `2g` | Size of the RAM-backed tmpfs mount (counts against container memory limit) |
 | `STAGING_TMPFS_DIR` | `/dicom-staging` | RAM-backed staging directory for incoming DICOM |
 | `STAGING_OVERFLOW_DIR` | `/dicom-staging-overflow` | Encrypted overflow when tmpfs fills up |
 | `STAGING_TMPFS_THRESHOLD_PCT` | `85` | tmpfs usage % before spilling to overflow |
+| `POOL_MAX_WORKERS` | `4` | Number of parallel anonymisation worker processes |
+| `QUEUE_MAX_SIZE` | `0` | Max files queued for anonymisation (`0` = unlimited) |
 | `DATA_DIR` | `/dicomsorter/data` | Final anonymised file storage |
 | `CONFIG_PATH` | — | Path to YAML config file |
+| `RECIPES_PATH` | — | Path to anonymisation recipes directory |
+| `IMAGING_API_KEY` | — | Shared API key for inter-service authentication |
 
 ### DVH Calculator
 

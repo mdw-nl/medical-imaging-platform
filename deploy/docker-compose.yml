@@ -46,6 +46,8 @@ services:
       - DATA_DIR=/dicomsorter/data
       - CONFIG_PATH=/app/services/imaging-hub/config/config.yaml
       - RECIPES_PATH=/app/services/imaging-hub/recipes
+      - POOL_MAX_WORKERS=${POOL_MAX_WORKERS:-4}
+      - QUEUE_MAX_SIZE=${QUEUE_MAX_SIZE:-0}
     restart: on-failure
     ports:
       - "${DICOM_PORT:-104}:104"
