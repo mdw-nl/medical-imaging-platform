@@ -17,6 +17,10 @@ send-dicom folder host="localhost" port="104" scp-ae-title="ALPHA":
     pip install --quiet "../[send]"
     python ../scripts/send_dicom.py {{folder}} --host {{host}} --port {{port}} --scp-ae-title {{scp-ae-title}}
 
+populate-lookup folder csv="recipes/patient_lookup.csv" *flags="":
+    pip install --quiet "../[send]"
+    python ../scripts/populate_patient_lookup.py {{folder}} --csv {{csv}} {{flags}}
+
 reset:
     docker compose down -v
     rm -rf data/
