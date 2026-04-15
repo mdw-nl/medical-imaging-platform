@@ -46,8 +46,9 @@ class PostgresInterface:
         password: str,
         port: int | str = 5432,
         sslmode: str = "prefer",
-        retry_attempts: int = 5,
-        retry_delay: int = 10,
+        retry_attempts: int = 12,
+        retry_delay: int = 2,
+        max_retry_delay: int = 30,
     ):
         self.host = host
         self.database = database
@@ -60,6 +61,7 @@ class PostgresInterface:
         self._lock = threading.Lock()
         self._retry_attempts = retry_attempts
         self._retry_delay = retry_delay
+        self._max_retry_delay = max_retry_delay
 
     def _is_connected(self) -> bool:
         if self.conn is None or self.conn.closed:
@@ -76,10 +78,11 @@ class PostgresInterface:
             self.connect()
 
     def connect(self):
-        """Establish a database connection, retrying on failure."""
+        """Establish a database connection, retrying with exponential backoff on failure."""
         if self.conn and not self.conn.closed:
             with contextlib.suppress(Exception):
                 self.conn.close()
+        delay = self._retry_delay
         for attempt in range(self._retry_attempts):
             try:
                 self.conn = psycopg2.connect(
@@ -101,8 +104,14 @@ class PostgresInterface:
             except psycopg2.OperationalError as e:
                 if attempt < self._retry_attempts - 1:
                     logger.warning("%s", e)
-                    logger.info("Retrying in %s seconds...", self._retry_delay)
-                    sleep(self._retry_delay)
+                    logger.info(
+                        "Retrying in %s seconds (attempt %d/%d)...",
+                        delay,
+                        attempt + 1,
+                        self._retry_attempts,
+                    )
+                    sleep(delay)
+                    delay = min(delay * 2, self._max_retry_delay)
                 else:
                     raise ConnectionError("Unable to connect to the database after retries.") from e
 

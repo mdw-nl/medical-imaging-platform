@@ -24,11 +24,12 @@ class StagedFile:
 class StagingManager:
     """Write incoming DICOM to fast tmpfs, falling back to encrypted overflow when space is low."""
 
-    def __init__(self, tmpfs_dir: str, overflow_dir: str, tmpfs_threshold_pct: int = 85):
+    def __init__(self, tmpfs_dir: str, overflow_dir: str, tmpfs_threshold_pct: int = 85, encrypt_overflow: bool = True):
         self._tmpfs_dir = Path(tmpfs_dir)
         self._overflow_dir = Path(overflow_dir)
         self._threshold = tmpfs_threshold_pct / 100
-        self._fernet = Fernet(Fernet.generate_key())
+        self._encrypt = encrypt_overflow
+        self._fernet = Fernet(Fernet.generate_key()) if encrypt_overflow else None
 
         self._tmpfs_dir.mkdir(parents=True, exist_ok=True)
         self._overflow_dir.mkdir(parents=True, exist_ok=True)
@@ -41,10 +42,11 @@ class StagingManager:
         logger.info("Wiped stale overflow contents in %s", self._overflow_dir)
 
         logger.info(
-            "StagingManager ready — tmpfs=%s (threshold %d%%), overflow=%s",
+            "StagingManager ready — tmpfs=%s (threshold %d%%), overflow=%s (encrypted=%s)",
             self._tmpfs_dir,
             tmpfs_threshold_pct,
             self._overflow_dir,
+            self._encrypt,
         )
 
     def stage(self, ds: Dataset, assoc_id: str, sop_uid: str) -> StagedFile:
@@ -65,12 +67,17 @@ class StagingManager:
     def _stage_overflow(self, ds: Dataset, assoc_id: str, sop_uid: str) -> StagedFile:
         directory = self._overflow_dir / assoc_id
         directory.mkdir(parents=True, exist_ok=True)
-        path = directory / f"{sop_uid}.dcm.enc"
-        buf = BytesIO()
-        ds.save_as(buf, write_like_original=False)
-        path.write_bytes(self._fernet.encrypt(buf.getvalue()))
-        logger.debug("Overflow: encrypted staging to %s", path)
-        return StagedFile(path=str(path), encrypted=True)
+        if self._encrypt:
+            path = directory / f"{sop_uid}.dcm.enc"
+            buf = BytesIO()
+            ds.save_as(buf, write_like_original=False)
+            path.write_bytes(self._fernet.encrypt(buf.getvalue()))
+            logger.debug("Overflow: encrypted staging to %s", path)
+            return StagedFile(path=str(path), encrypted=True)
+        path = directory / f"{sop_uid}.dcm"
+        ds.save_as(str(path), write_like_original=False)
+        logger.debug("Overflow: unencrypted staging to %s", path)
+        return StagedFile(path=str(path), encrypted=False)
 
     def read_to_tempfile(self, staged: StagedFile) -> str:
         """Return a readable file path, decrypting to a temp file if necessary."""

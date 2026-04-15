@@ -559,6 +559,7 @@ Standard PyRadiomics configuration. Controls image normalisation, bin width, ena
 | `STAGING_TMPFS_THRESHOLD_PCT` | `85` | tmpfs usage % before spilling to overflow |
 | `POOL_MAX_WORKERS` | `4` | Number of parallel anonymisation worker processes |
 | `QUEUE_MAX_SIZE` | `0` | Max files queued for anonymisation (`0` = unlimited) |
+| `STAGING_ENCRYPT_OVERFLOW` | `true` | Fernet-encrypt overflow files; disable to reduce CPU on constrained hosts |
 | `DATA_DIR` | `/dicomsorter/data` | Final anonymised file storage |
 | `CONFIG_PATH` | — | Path to YAML config file |
 | `RECIPES_PATH` | — | Path to anonymisation recipes directory |

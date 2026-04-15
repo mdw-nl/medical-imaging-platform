@@ -104,10 +104,24 @@ app = FastAPI(lifespan=lifespan)
 
 @app.middleware("http")
 async def api_key_middleware(request: Request, call_next):
+    if request.url.path == "/health":
+        return await call_next(request)
     key = request.headers.get("X-API-Key")
     if key != _API_KEY:
         return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
     return await call_next(request)
+
+
+@app.get("/health")
+async def health():
+    """Return service health status for Docker healthcheck and monitoring."""
+    db_ok = db._is_connected()
+    status = "healthy" if db_ok else "degraded"
+    code = 200 if db_ok else 503
+    return JSONResponse(
+        status_code=code,
+        content={"status": status, "database": "connected" if db_ok else "disconnected"},
+    )
 
 
 @app.post("/sop_instance_uids")

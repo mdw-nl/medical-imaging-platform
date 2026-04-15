@@ -11,3 +11,10 @@ DEFER_NIFTI = os.getenv("DEFER_NIFTI", "true").strip().lower() in ("1", "true", 
 STAGING_TMPFS_DIR = os.getenv("STAGING_TMPFS_DIR", "/dicom-staging")
 STAGING_OVERFLOW_DIR = os.getenv("STAGING_OVERFLOW_DIR", "/dicom-staging-overflow")
 STAGING_TMPFS_THRESHOLD_PCT = int(os.getenv("STAGING_TMPFS_THRESHOLD_PCT", "85"))
+STAGING_ENCRYPT_OVERFLOW = os.getenv("STAGING_ENCRYPT_OVERFLOW", "true").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "y",
+    "on",
+)

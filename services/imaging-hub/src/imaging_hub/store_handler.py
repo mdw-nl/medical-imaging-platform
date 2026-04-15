@@ -15,6 +15,7 @@ from imaging_hub.background_processor import BackgroundProcessor, get_or_create_
 from imaging_hub.queries import INSERT_QUERY_DICOM_ASS
 from imaging_hub.settings import (
     DEFER_NIFTI,
+    STAGING_ENCRYPT_OVERFLOW,
     STAGING_OVERFLOW_DIR,
     STAGING_TMPFS_DIR,
     STAGING_TMPFS_THRESHOLD_PCT,
@@ -49,6 +50,7 @@ class DicomStoreHandler:
             tmpfs_dir=STAGING_TMPFS_DIR,
             overflow_dir=STAGING_OVERFLOW_DIR,
             tmpfs_threshold_pct=STAGING_TMPFS_THRESHOLD_PCT,
+            encrypt_overflow=STAGING_ENCRYPT_OVERFLOW,
         )
 
         self.tracker = AssociationTracker(
