@@ -156,7 +156,7 @@ graph TB
         OUT["DVH/output.py<br/><i>JSON-LD serialization</i>"]
         ROIH["roi_handler.py<br/><i>combine_rois via rt-utils</i>"]
         PGDVH["postgres_dvh.py<br/><i>PostgresUploader<br/>dvh_result + dvh_package</i>"]
-        GVAR["Config/global_var.py<br/><i>UPLOAD_DESTINATION, DELETE_END</i>"]
+        GVAR["Config/global_var.py<br/><i>UPLOAD_DESTINATION</i>"]
     end
 
     subgraph rad["services / radiomics-calculator"]

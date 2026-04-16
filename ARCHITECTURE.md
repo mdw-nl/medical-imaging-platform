@@ -92,7 +92,7 @@ Incoming DICOM data passes through a **three-layer staging architecture** before
         {sop_instance_uid}.dcm
 ```
 
-These anonymised files remain on disk permanently unless `DELETE_END=true` is set in the DVH Calculator, in which case they are deleted after a successful DVH calculation. Downstream consumers look up `file_path` in `dicom_insert` to locate the files.
+These anonymised files persist on the shared `ASSOCIATION_DATA` volume. All consumer services (DVH calculator, radiomics-calculator, pacs-archiver) read directly from this volume. No service deletes DICOM data after processing. Downstream consumers look up `file_path` in `dicom_insert` to locate the files.
 
 ### 2.3 Anonymisation
 
@@ -572,7 +572,6 @@ Standard PyRadiomics configuration. Controls image normalisation, bin width, ena
 | `DICOM_SERVICE_URL` | — | Imaging Hub FastAPI URL (e.g. `http://imaging-hub:9000`) |
 | `POLL_CRON` | `*/1 * * * *` | Cron schedule for polling the Imaging Hub |
 | `UPLOAD_DESTINATION` | `postgres` | `postgres`, `xnat`, or `gdp` |
-| `DELETE_END` | `false` | Delete source DICOM files after calculation |
 
 ### Radiomics Calculator
 

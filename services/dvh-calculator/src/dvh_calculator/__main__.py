@@ -59,6 +59,7 @@ def start_poller():
         endpoint="/rt_package",
         request_body={"modality": "RTDOSE"},
         callback=_handle_package,
+        max_workers=1,
     )
     poller.poll()
 

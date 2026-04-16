@@ -1,40 +1,282 @@
-"""Convert RTSTRUCT + CT DICOM pairs to NIfTI masks in background processes."""
+"""Convert RTSTRUCT + CT DICOM pairs to NIfTI masks in background processes.
+
+Uses dcm2niix for CT-to-NIfTI conversion (C binary, ~50 MB) and a custom
+rasterizer that processes one ROI mask at a time to keep peak memory around
+200 MB regardless of ROI count.
+"""
 
 import logging
+import os
 import shutil
+import subprocess
 from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
 from imaging_hub.settings import BASE_DIR
 
+_NIFTI_MAX_WORKERS = int(os.getenv("NIFTI_MAX_WORKERS", "1"))
+
 logger = logging.getLogger(__name__)
 
 
-def _convert_in_process(ct_folder, rtstruct_file, tmp_dir):
-    import builtins  # noqa: PLC0415 — must import inside subprocess worker
+def _run_dcm2niix(ct_folder, output_dir):
+    """Convert a CT DICOM series to compressed NIfTI using dcm2niix.
 
-    original_quit = builtins.quit
+    Falls back to pydicom + nibabel when dcm2niix cannot handle the data
+    (e.g. non-uniform slice spacing or unusual pixel data types).
+    """
+    result = subprocess.run(
+        [
+            "dcm2niix",
+            "-z",
+            "y",
+            "-f",
+            "image",
+            "-o",
+            output_dir,
+            "-b",
+            "n",
+            "-w",
+            "1",
+            ct_folder,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
 
-    def _no_quit(*_args, **_kwargs):
-        raise RuntimeError("platipy called quit() — contour geometry error")
+    target = Path(output_dir) / "image.nii.gz"
 
-    builtins.quit = _no_quit
-    try:
-        from platipy.dicom.io.rtstruct_to_nifti import convert_rtstruct  # noqa: PLC0415 — lazy import in subprocess
+    if result.returncode != 0:
+        logger.warning("dcm2niix failed (rc=%d), falling back to pydicom: %s", result.returncode, result.stdout)
+        _convert_ct_with_pydicom(ct_folder, str(target))
+        return
 
-        convert_rtstruct(
-            dcm_img=ct_folder,
-            dcm_rt_file=rtstruct_file,
-            output_img="image.nii",
-            prefix="Mask_",
-            output_dir=tmp_dir,
+    candidates = sorted(
+        Path(output_dir).glob("image*.nii.gz"),
+        key=lambda p: p.stat().st_size,
+        reverse=True,
+    )
+    if not candidates:
+        logger.warning("dcm2niix produced no output, falling back to pydicom")
+        _convert_ct_with_pydicom(ct_folder, str(target))
+        return
+
+    if len(candidates) > 1:
+        logger.warning(
+            "dcm2niix produced %d files, using largest: %s",
+            len(candidates),
+            candidates[0].name,
         )
-    finally:
-        builtins.quit = original_quit
+
+    if candidates[0] != target:
+        candidates[0].rename(target)
+
+
+def _convert_ct_with_pydicom(ct_folder, output_path):
+    """Fallback CT-to-NIfTI conversion using pydicom + nibabel.
+
+    Handles edge cases dcm2niix cannot (non-uniform slice spacing, unusual
+    pixel formats).  Reads slices one at a time, builds the volume, and writes
+    a compressed NIfTI with the correct affine.
+    """
+    import nibabel as nib  # noqa: PLC0415 — subprocess-only
+    import numpy as np  # noqa: PLC0415
+    import pydicom  # noqa: PLC0415
+
+    dcm_files = sorted(Path(ct_folder).glob("*.dcm"))
+    if not dcm_files:
+        dcm_files = sorted(Path(ct_folder).iterdir())
+
+    slices = []
+    for f in dcm_files:
+        ds = pydicom.dcmread(str(f))
+        if hasattr(ds, "ImagePositionPatient"):
+            slices.append(ds)
+    if not slices:
+        raise FileNotFoundError(f"No valid CT DICOM slices found in {ct_folder}")
+
+    slices.sort(key=lambda s: float(s.ImagePositionPatient[2]))
+
+    first = slices[0]
+    rows = int(first.Rows)
+    cols = int(first.Columns)
+    n_slices = len(slices)
+
+    pixel_spacing = [float(v) for v in first.PixelSpacing]
+    orientation = [float(v) for v in first.ImageOrientationPatient]
+    position = [float(v) for v in first.ImagePositionPatient]
+
+    row_cosine = np.array(orientation[:3])
+    col_cosine = np.array(orientation[3:])
+    slice_cosine = np.cross(row_cosine, col_cosine)
+
+    if n_slices > 1:
+        last_pos = [float(v) for v in slices[-1].ImagePositionPatient]
+        slice_spacing = np.linalg.norm(np.array(last_pos) - np.array(position)) / (n_slices - 1)
+    else:
+        slice_spacing = float(getattr(first, "SliceThickness", 1.0))
+
+    affine_lps = np.eye(4)
+    affine_lps[:3, 0] = row_cosine * pixel_spacing[1]
+    affine_lps[:3, 1] = col_cosine * pixel_spacing[0]
+    affine_lps[:3, 2] = slice_cosine * slice_spacing
+    affine_lps[:3, 3] = position
+
+    lps_to_ras = np.diag([-1, -1, 1, 1])
+    affine_ras = lps_to_ras @ affine_lps
+
+    volume = np.zeros((cols, rows, n_slices), dtype=np.int16)
+    for i, ds in enumerate(slices):
+        arr = ds.pixel_array
+        slope = float(getattr(ds, "RescaleSlope", 1))
+        intercept = float(getattr(ds, "RescaleIntercept", 0))
+        volume[:, :, i] = (arr.T * slope + intercept).astype(np.int16)
+
+    nib.save(nib.Nifti1Image(volume, affine_ras), output_path)
+    logger.info("Fallback CT conversion: wrote %s (%s)", output_path, volume.shape)
+
+
+def _fix_missing_contour_data(contour_data):
+    """Fix contour coordinate arrays that have missing values (ported from platipy)."""
+    import numpy as np  # noqa: PLC0415 — subprocess-only
+
+    contour_data = np.array(contour_data)
+    if contour_data.any() == "":
+        missing_values = np.where(contour_data == "")[0]
+        if missing_values.shape[0] > 1:
+            return contour_data
+        missing_index = missing_values[0]
+        missing_axis = missing_index % 3
+        if missing_axis == 0:
+            if missing_index > len(contour_data) - 3:
+                lower = contour_data[missing_index - 3]
+                upper = contour_data[0]
+            elif missing_index == 0:
+                lower = contour_data[-3]
+                upper = contour_data[3]
+            else:
+                lower = contour_data[missing_index - 3]
+                upper = contour_data[missing_index + 3]
+            contour_data[missing_index] = 0.5 * (float(lower) + float(upper))
+        elif missing_axis == 1:
+            if missing_index > len(contour_data) - 2:
+                lower = contour_data[missing_index - 3]
+                upper = contour_data[1]
+            elif missing_index == 0:
+                lower = contour_data[-2]
+                upper = contour_data[4]
+            else:
+                lower = contour_data[missing_index - 3]
+                upper = contour_data[missing_index + 3]
+            contour_data[missing_index] = 0.5 * (float(lower) + float(upper))
+        else:
+            temp = contour_data[2::3].tolist()
+            temp.remove("")
+            contour_data[missing_index] = np.min(np.array(temp, dtype=np.double))
+    return contour_data
+
+
+def _rasterize_rtstruct(rtstruct_file, affine, shape, output_dir, prefix="Mask_"):
+    """Rasterize RTSTRUCT contours into individual NIfTI mask files, one ROI at a time.
+
+    RTSTRUCT contour points are in DICOM patient coordinates (LPS+).  The NIfTI
+    affine from dcm2niix maps voxel (i, j, k) to RAS+ world coordinates, so we
+    negate x and y before applying the inverse affine.
+    """
+    import nibabel as nib  # noqa: PLC0415 — subprocess-only
+    import numpy as np  # noqa: PLC0415
+    import pydicom  # noqa: PLC0415
+    from nibabel.affines import apply_affine  # noqa: PLC0415
+    from skimage.draw import polygon  # noqa: PLC0415
+
+    inv_affine = np.linalg.inv(affine)
+    lps_to_ras = np.array([-1, -1, 1])
+
+    ds = pydicom.dcmread(rtstruct_file, force=True)
+    if not hasattr(ds, "ROIContourSequence") or not hasattr(ds, "StructureSetROISequence"):
+        return []
+
+    contour_lookup = {cs.ReferencedROINumber: cs for cs in ds.ROIContourSequence}
+    masks_written = []
+
+    for roi_seq in ds.StructureSetROISequence:
+        roi_name = "_".join(roi_seq.ROIName.split())
+        roi_number = roi_seq.ROINumber
+
+        if roi_number not in contour_lookup:
+            continue
+        contour_item = contour_lookup[roi_number]
+        if not hasattr(contour_item, "ContourSequence"):
+            continue
+        if len(contour_item.ContourSequence) == 0:
+            continue
+        if contour_item.ContourSequence[0].ContourGeometricType != "CLOSED_PLANAR":
+            continue
+
+        mask = np.zeros(shape[:3], dtype=np.uint8)
+        skip_contour = False
+
+        for contour in contour_item.ContourSequence:
+            contour_data = _fix_missing_contour_data(contour.ContourData)
+            pts_lps = np.array(contour_data, dtype=np.float64).reshape(-1, 3)
+            pts_ras = pts_lps * lps_to_ras
+            pts_voxel = apply_affine(inv_affine, pts_ras)
+
+            k_indices = np.round(pts_voxel[:, 2]).astype(int)
+            k_index = k_indices[0]
+            if np.any(k_indices != k_index):
+                logger.debug("Axial slice index varies in contour, skipping ROI %s", roi_name)
+                skip_contour = True
+                break
+
+            if k_index < 0 or k_index >= shape[2]:
+                logger.debug(
+                    "Slice %d outside bounds for ROI %s, skipping slice",
+                    k_index,
+                    roi_name,
+                )
+                continue
+
+            i_coords = np.round(pts_voxel[:, 0]).astype(int)
+            j_coords = np.round(pts_voxel[:, 1]).astype(int)
+
+            slice_mask = np.zeros((shape[0], shape[1]), dtype=np.uint8)
+            rr, cc = polygon(i_coords, j_coords, shape=slice_mask.shape)
+            slice_mask[rr, cc] = 1
+            mask[:, :, k_index] ^= slice_mask
+
+        if skip_contour:
+            continue
+
+        roi_name_clean = roi_name.replace("/", "").replace("\\", "")
+        out_path = Path(output_dir) / f"{prefix}{roi_name_clean}.nii.gz"
+        nib.save(nib.Nifti1Image(mask, affine), str(out_path))
+        masks_written.append(roi_name_clean)
+        logger.debug("Wrote mask: %s", out_path.name)
+        del mask
+
+    return masks_written
+
+
+def _convert_in_process(ct_folder, rtstruct_file, tmp_dir):
+    """Convert CT DICOM + RTSTRUCT to NIfTI using dcm2niix and custom rasterizer."""
+    import nibabel as nib  # noqa: PLC0415 — subprocess-only
+
+    _run_dcm2niix(ct_folder, tmp_dir)
+
+    img = nib.load(str(Path(tmp_dir) / "image.nii.gz"))
+    affine = img.affine.copy()
+    shape = img.shape[:3]
+    del img
+
+    _rasterize_rtstruct(rtstruct_file, affine, shape, tmp_dir)
 
 
 def _make_db(db_params):
+    """Create a fresh database connection for use inside a subprocess."""
     from imaging_common.database import PostgresInterface  # noqa: PLC0415 — fresh import in subprocess
 
     db = PostgresInterface(**db_params)
@@ -129,7 +371,7 @@ class NiftiConverter:
             "password": db.password,
             "port": db.port,
         }
-        self._executor = ProcessPoolExecutor(max_workers=2, mp_context=None)
+        self._executor = ProcessPoolExecutor(max_workers=_NIFTI_MAX_WORKERS, max_tasks_per_child=1)
 
     def record_pending(self, study_uid, patient_id):
         """Insert pending nifti_conversion rows without starting the actual conversion."""

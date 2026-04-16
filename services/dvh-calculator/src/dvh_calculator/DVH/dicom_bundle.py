@@ -1,7 +1,6 @@
 """Container for a matched set of RT DICOM files (plan, struct, dose, CT)."""
 
 import logging
-from pathlib import Path
 
 from dicompylercore.dicomparser import DicomParser
 
@@ -38,21 +37,3 @@ class DicomBundle:
             and self.rt_ct_path == other.rt_ct_path
             and self.rt_struct_path == other.rt_struct_path
         )
-
-    def rm_data_patient(self):
-        """Delete all DICOM files associated with this bundle from disk."""
-        try:
-            logger.info("Removing data for patient %s", self.patient_id)
-            Path(self.rt_plan_path).unlink()
-            logger.info("Removing rt plan  %s", self.rt_plan_path)
-            Path(self.rt_struct_path).unlink()
-            logger.info("Removing data rt struct %s", self.rt_struct_path)
-            for rt in self.rt_dose_path:
-                logger.info("Removing data rt dose %s", rt)
-                Path(rt).unlink()
-            if self.rt_plan_path is not None and self.rt_ct_path is not None:
-                ct_dir = Path(self.rt_ct_path)
-                for f in ct_dir.iterdir():
-                    f.unlink()
-        except Exception:
-            logger.exception("Error deleting files")

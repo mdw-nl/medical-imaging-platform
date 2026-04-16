@@ -112,6 +112,7 @@ class BackgroundProcessor:
             processes=_POOL_MAX_WORKERS,
             initializer=_init_worker,
             initargs=(self._anonymization_settings, self._path_recipes),
+            maxtasksperchild=50,
         )
 
     def enqueue(

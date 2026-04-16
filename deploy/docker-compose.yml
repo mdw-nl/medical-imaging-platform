@@ -53,6 +53,7 @@ services:
       - POOL_MAX_WORKERS=${POOL_MAX_WORKERS:-4}
       - QUEUE_MAX_SIZE=${QUEUE_MAX_SIZE:-0}
       - STAGING_ENCRYPT_OVERFLOW=${STAGING_ENCRYPT_OVERFLOW:-true}
+      - NIFTI_MAX_WORKERS=${NIFTI_MAX_WORKERS:-1}
     restart: on-failure
     healthcheck:
       test:

@@ -9,7 +9,7 @@ from rt_utils import RTStructBuilder
 
 from dvh_calculator.config import CONFIG_PATH as _CONFIG_PATH
 from dvh_calculator.config import yaml_config as _config
-from dvh_calculator.Config.global_var import DELETE_END, QUERY_UID, UPLOAD_DESTINATION
+from dvh_calculator.Config.global_var import QUERY_UID, UPLOAD_DESTINATION
 from dvh_calculator.DVH.dicom_bundle import DicomBundle
 from dvh_calculator.DVH.dvh import DVHCalculation
 from dvh_calculator.DVH.output import return_output
@@ -41,7 +41,6 @@ def verify_bundle(dicom_bundle):
 
 def process_message(study_uid):
     """Use the study_uid to retrieve data and start the dvh calculation."""
-    logger.info("Delete is: %s", DELETE_END)
     db = PostgresInterface.connect_from_yaml(_CONFIG_PATH)
 
     if study_uid is None:
@@ -59,11 +58,6 @@ def process_message(study_uid):
                 logger.info("Patients to analyze: %s", len(dicom_bundles))
                 logger.info("%s", dicom_bundles[0])
                 calculate_dvh_curves(dicom_bundle)
-            logger.info("%s", DELETE_END)
-            if DELETE_END:
-                logger.info("Deleting patient data from the database, %s", DELETE_END)
-                for dicom_bundle in dicom_bundles:
-                    dicom_bundle.rm_data_patient()
         else:
             logger.info("No dicom bundles found for the study uid")
     db.disconnect()

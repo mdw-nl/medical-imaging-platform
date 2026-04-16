@@ -67,5 +67,6 @@ if __name__ == "__main__":
         endpoint="/nifti_package",
         request_body={"modality": "RTSTRUCT"},
         callback=pipeline.process_message,
+        max_workers=1,
     )
     poller.poll()
