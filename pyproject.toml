@@ -95,7 +95,7 @@ strict = true
     "COM818", "TRY400", "TRY401",
 ]
 "services/imaging-hub/src/imaging_hub/anonymization/anonymizer.py" = ["PLC0415", "TC001"]
-"services/imaging-hub/src/imaging_hub/nifti_converter.py" = ["S603", "S607"]
+"services/imaging-hub/src/imaging_hub/nifti_converter.py" = ["S603"]
 "services/dvh-calculator/**" = [
     "PD011",
     "S112",

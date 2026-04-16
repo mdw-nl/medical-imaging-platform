@@ -16,6 +16,7 @@ from pathlib import Path
 from imaging_hub.settings import BASE_DIR
 
 _NIFTI_MAX_WORKERS = int(os.getenv("NIFTI_MAX_WORKERS", "1"))
+_DCM2NIIX = shutil.which("dcm2niix")
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +27,14 @@ def _run_dcm2niix(ct_folder, output_dir):
     Falls back to pydicom + nibabel when dcm2niix cannot handle the data
     (e.g. non-uniform slice spacing or unusual pixel data types).
     """
+    if not _DCM2NIIX:
+        logger.warning("dcm2niix not found on PATH, falling back to pydicom")
+        _convert_ct_with_pydicom(ct_folder, str(Path(output_dir) / "image.nii.gz"))
+        return
+
     result = subprocess.run(
         [
-            "dcm2niix",
+            _DCM2NIIX,
             "-z",
             "y",
             "-f",
