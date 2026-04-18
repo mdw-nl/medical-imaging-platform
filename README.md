@@ -59,12 +59,12 @@ The file baked into the image (`services/imaging-hub/recipes/patient_lookup.csv`
 ```yaml
 # In your docker-compose.yml
 volumes:
-  - ./my_patient_lookup.csv:/app/services/imaging-hub/recipes/patient_lookup.csv
+  - ./my_patient_lookup.csv:/app/deploy/recipes/patient_lookup.csv
 ```
 
 **Option B** — Add patient IDs before building:
 
-Edit `services/imaging-hub/recipes/patient_lookup.csv` directly:
+Edit `deploy/recipes/patient_lookup.csv` directly:
 
 ```csv
 original,new
