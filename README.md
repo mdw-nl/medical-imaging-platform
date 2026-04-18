@@ -10,6 +10,30 @@ A modular pipeline for receiving, anonymizing, converting, and analyzing radioth
 
 No other tools or runtimes are required. All services are built inside Docker.
 
+### Windows users — additional setup
+
+Before running the Quick Start, complete these two steps:
+
+**1. Install Git for Windows.** This provides `sh.exe`, which `just` requires to run recipes.
+
+```powershell
+winget install --id Git.Git -e
+```
+
+Or download from [git-scm.com](https://git-scm.com/download/win).
+
+**2. Add Git's `bin` directory to PATH** so `just` can find `sh`. To make it permanent (recommended), run once and then close and reopen PowerShell:
+
+```powershell
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\Git\bin", "User")
+```
+
+For a one-off session only:
+
+```powershell
+$env:Path += ";C:\Program Files\Git\bin"
+```
+
 ## Quick Start
 
 ```bash
