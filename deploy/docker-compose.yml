@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:13
+    user: "${DOCKER_UID:-0}:${DOCKER_GID:-0}"
     container_name: postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -54,8 +55,8 @@ services:
       - QUEUE_MAX_SIZE=${QUEUE_MAX_SIZE:-0}
       - STAGING_ENCRYPT_OVERFLOW=${STAGING_ENCRYPT_OVERFLOW:-true}
       - NIFTI_MAX_WORKERS=${NIFTI_MAX_WORKERS:-1}
-      - HOST_UID=${UID:-}
-      - HOST_GID=${GID:-}
+      - HOST_UID=${DOCKER_UID:-}
+      - HOST_GID=${DOCKER_GID:-}
     restart: on-failure
     healthcheck:
       test:
@@ -82,7 +83,7 @@ services:
       - dicom-staging-overflow:/dicom-staging-overflow
 
   radiomics-calculator:
-    user: "${UID:-0}:${GID:-0}"
+    user: "${DOCKER_UID:-0}:${DOCKER_GID:-0}"
     build:
       context: ..
       dockerfile: services/radiomics-calculator/Dockerfile
@@ -111,7 +112,7 @@ services:
       - pipeline
 
   dvh-calculator:
-    user: "${UID:-0}:${GID:-0}"
+    user: "${DOCKER_UID:-0}:${DOCKER_GID:-0}"
     build:
       context: ..
       dockerfile: services/dvh-calculator/Dockerfile
@@ -138,7 +139,7 @@ services:
       - pipeline
 
   pacs-archiver:
-    user: "${UID:-0}:${GID:-0}"
+    user: "${DOCKER_UID:-0}:${DOCKER_GID:-0}"
     build:
       context: ..
       dockerfile: services/pacs-archiver/Dockerfile
