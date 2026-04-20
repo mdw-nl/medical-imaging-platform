@@ -1,7 +1,12 @@
 default:
     @just --list
 
-up:
+up-linux:
+    mkdir -p data/associationdata data/postgres data/dvh \
+        data/xnat/home/logs data/xnat/archive data/xnat/build data/xnat/cache
+    UID=$(id -u) GID=$(id -g) docker compose up -d --build
+
+up-mac:
     docker compose up -d --build
 
 down:
