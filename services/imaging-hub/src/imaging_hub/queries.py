@@ -82,6 +82,8 @@ UNIQUE_UID_SELECT = """
 CREATE_DVH_RESULT = """
 CREATE TABLE IF NOT EXISTS dvh_result (
     result_id SERIAL PRIMARY KEY,
+    patient_id TEXT NOT NULL,
+    structure_name TEXT NOT NULL,
     json_id TEXT UNIQUE NOT NULL,
     dose_bins DOUBLE PRECISION[] NOT NULL,
     volume_bins DOUBLE PRECISION[] NOT NULL,
