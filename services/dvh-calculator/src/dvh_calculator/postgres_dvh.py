@@ -4,38 +4,40 @@ from dvh_calculator.config import settings as _settings
 from imaging_common import PostgresInterface
 
 
-def create_dvh_tables(db: PostgresInterface):
-    """Create DVH tables on docker compose up."""
-    db.create_table(
-        "dvh_result",
-        {
-            "result_id": "SERIAL PRIMARY KEY",
-            "patient_id": "TEXT NOT NULL",
-            "structure_name": "TEXT NOT NULL",
-            "json_id": "TEXT UNIQUE NOT NULL",
-            "dose_bins": "DOUBLE PRECISION[] NOT NULL",
-            "volume_bins": "DOUBLE PRECISION[] NOT NULL",
-            "D2": "DOUBLE PRECISION",
-            "D50": "DOUBLE PRECISION",
-            "D95": "DOUBLE PRECISION",
-            "D98": "DOUBLE PRECISION",
-            "min_dose": "DOUBLE PRECISION",
-            "mean_dose": "DOUBLE PRECISION",
-            "max_dose": "DOUBLE PRECISION",
-            "V0": "DOUBLE PRECISION",
-            "V15": "DOUBLE PRECISION",
-            "V35": "DOUBLE PRECISION",
-        },
-    )
-
-    db.create_table(
-        "dvh_package",
-        {
-            "sop_instance_uid": "TEXT NOT NULL",
-            "roi_name": "TEXT NOT NULL",
-            "result_id": "INTEGER NOT NULL REFERENCES dvh_result(result_id) ON DELETE CASCADE",
-        },
-    )
+# dvh_result and dvh_package tables are created by imaging-hub at startup
+# (see services/imaging-hub/src/imaging_hub/queries.py). Kept here for reference.
+# def create_dvh_tables(db: PostgresInterface):
+#     """Create DVH tables on docker compose up."""
+#     db.create_table(
+#         "dvh_result",
+#         {
+#             "result_id": "SERIAL PRIMARY KEY",
+#             "patient_id": "TEXT NOT NULL",
+#             "structure_name": "TEXT NOT NULL",
+#             "json_id": "TEXT UNIQUE NOT NULL",
+#             "dose_bins": "DOUBLE PRECISION[] NOT NULL",
+#             "volume_bins": "DOUBLE PRECISION[] NOT NULL",
+#             "D2": "DOUBLE PRECISION",
+#             "D50": "DOUBLE PRECISION",
+#             "D95": "DOUBLE PRECISION",
+#             "D98": "DOUBLE PRECISION",
+#             "min_dose": "DOUBLE PRECISION",
+#             "mean_dose": "DOUBLE PRECISION",
+#             "max_dose": "DOUBLE PRECISION",
+#             "V0": "DOUBLE PRECISION",
+#             "V15": "DOUBLE PRECISION",
+#             "V35": "DOUBLE PRECISION",
+#         },
+#     )
+#
+#     db.create_table(
+#         "dvh_package",
+#         {
+#             "sop_instance_uid": "TEXT NOT NULL",
+#             "roi_name": "TEXT NOT NULL",
+#             "result_id": "INTEGER NOT NULL REFERENCES dvh_result(result_id) ON DELETE CASCADE",
+#         },
+#     )
 
 
 class PostgresUploader:
