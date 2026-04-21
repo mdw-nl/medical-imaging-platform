@@ -10,6 +10,8 @@ def create_dvh_tables(db: PostgresInterface):
         "dvh_result",
         {
             "result_id": "SERIAL PRIMARY KEY",
+            "patient_id": "TEXT NOT NULL",
+            "structure_name": "TEXT NOT NULL",
             "json_id": "TEXT UNIQUE NOT NULL",
             "dose_bins": "DOUBLE PRECISION[] NOT NULL",
             "volume_bins": "DOUBLE PRECISION[] NOT NULL",
@@ -118,15 +120,17 @@ class PostgresUploader:
             pg.cursor.execute(
                 """
                 INSERT INTO dvh_result (
-                    json_id, dose_bins, volume_bins,
+                    patient_id, structure_name, json_id, dose_bins, volume_bins,
                     D2, D50, D95, D98,
                     min_dose, mean_dose, max_dose,
                     V0, V15, V35
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING result_id
                 """,
                 (
+                    dicom_bundle.patient_id,
+                    roi_data["roi_name"],
                     roi_data["json_id"],
                     d_points,
                     v_points,
