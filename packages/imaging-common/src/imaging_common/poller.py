@@ -42,6 +42,12 @@ class APIPoller:
         self._pending = {f for f in self._pending if not f.done()}
         return len(self._pending) == 0
 
+    @staticmethod
+    def _log_callback_exception(future: concurrent.futures.Future):
+        exc = future.exception()
+        if exc is not None:
+            logger.error("Callback failed", exc_info=exc)
+
     def poll(self):
         """Run the poll loop, blocking until ``shutdown`` is called."""
         cron = croniter(self.poll_cron, datetime.now())
@@ -70,6 +76,7 @@ class APIPoller:
                 packages = response.json().get("packages", [])
                 for package in packages:
                     future = self.executor.submit(self.callback, package)
+                    future.add_done_callback(self._log_callback_exception)
                     self._pending.add(future)
             except Exception:
                 logger.exception("Error polling DICOM service")
