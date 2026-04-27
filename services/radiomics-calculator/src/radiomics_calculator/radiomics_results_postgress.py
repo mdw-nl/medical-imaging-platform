@@ -236,8 +236,8 @@ def send_postgress(db, csv_content, metadata):
     radiomics_id = str(uuid.uuid4())  # generates a unique ID as a string
     manager_data = {}
 
-    manager_data["radiomics_id"] = (radiomics_id,)
-    manager_data["sop_instance_uid"] = (metadata["sop_instance_uid"],)
+    manager_data["radiomics_id"] = radiomics_id
+    manager_data["sop_instance_uid"] = metadata["sop_instance_uid"]
 
     try:
         db.insert("radiomics_manager", manager_data)

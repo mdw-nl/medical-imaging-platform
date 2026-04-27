@@ -1,7 +1,7 @@
 # Organs at risk (OARs)
 
 BODY:
-  - '^body$'
+  - '^body([\s_-]*p)?$'
   - '^external$'
   - '^outer[\s_-]*contour$'
 
@@ -159,6 +159,7 @@ TUMOR:
 
 CTV_1:
   - '^ctv[\s_-]*1$'
+  - '^ctv[\s_-]*p$'
 
 CTV_2:
   - '^ctv[\s_-]*2$'
@@ -253,3 +254,15 @@ SUBMAND_R_MINUS_PTV:
 
 THYROID_MINUS_PTV:
   - '^thyroid[\s_-]*ptv$'
+
+KIDNEY_L:
+  - '^kidney[\s_-]*l(eft)?([\s_-]*p)?$'
+
+KIDNEY_R:
+  - '^kidney[\s_-]*r(ight)?([\s_-]*p)?$'
+
+LIVER:
+  - '^liver([\s_-]*p)?$'
+
+DPV_P:
+  - '^dpv[\s_-]*p$'

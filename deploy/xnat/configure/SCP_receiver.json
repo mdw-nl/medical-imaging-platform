@@ -10,7 +10,7 @@
     "whitelistEnabled": false,
     "whitelistText": "",
     "routingExpressionsEnabled": true,
-    "projectRoutingExpression": "",
+    "projectRoutingExpression": "(0008,0018):(.*):1 t:.+ r:ALPHA",
     "subjectRoutingExpression": "",
     "sessionRoutingExpression": ""
 },
@@ -26,7 +26,7 @@
     "whitelistEnabled": false,
     "whitelistText": "",
     "routingExpressionsEnabled": true,
-    "projectRoutingExpression": "",
+    "projectRoutingExpression": "(0008,0018):(.*):1 t:.+ r:BETA",
     "subjectRoutingExpression": "",
     "sessionRoutingExpression": ""
 },
@@ -42,7 +42,7 @@
     "whitelistEnabled": false,
     "whitelistText": "",
     "routingExpressionsEnabled": true,
-    "projectRoutingExpression": "",
+    "projectRoutingExpression": "(0008,0018):(.*):1 t:.+ r:GAMMMA",
     "subjectRoutingExpression": "",
     "sessionRoutingExpression": ""
 }]
