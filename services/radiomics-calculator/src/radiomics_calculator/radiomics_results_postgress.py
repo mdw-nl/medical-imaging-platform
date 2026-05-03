@@ -124,11 +124,9 @@ class setup_radiomics_db:
             "original_glcm_Idmn": "FLOAT",
             "original_glcm_InverseVariance": "FLOAT",
             "original_glcm_MaximumProbability": "FLOAT",
-            "original_glcm_SumAverage": "FLOAT",
             "original_glcm_SumEntropy": "FLOAT",
             "original_glcm_SumSquares": "FLOAT",
             "original_glcm_MCC": "FLOAT",
-            "original_glcm_Homogeneity": "FLOAT",
             # ----------------------------------------------------------------
             # GLRLM features (16)
             # ----------------------------------------------------------------
@@ -173,7 +171,6 @@ class setup_radiomics_db:
             "original_gldm_SmallDependenceEmphasis": "FLOAT",
             "original_gldm_LargeDependenceEmphasis": "FLOAT",
             "original_gldm_GrayLevelNonUniformity": "FLOAT",
-            "original_gldm_GrayLevelNonUniformityNormalized": "FLOAT",
             "original_gldm_DependenceNonUniformity": "FLOAT",
             "original_gldm_DependenceNonUniformityNormalized": "FLOAT",
             "original_gldm_DependenceVariance": "FLOAT",

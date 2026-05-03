@@ -34,6 +34,7 @@ featureClass:
     - 'MaximumProbability'
     - 'SumEntropy'
     - 'SumSquares'
+    - 'MCC'
   glrlm:
   glszm:
   gldm:
